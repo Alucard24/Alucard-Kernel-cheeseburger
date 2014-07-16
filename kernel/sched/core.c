@@ -3412,6 +3412,8 @@ static void __sched notrace __schedule(bool preempt)
 	clear_preempt_need_resched();
 	rq->clock_skip_update = 0;
 
+	BUG_ON(task_cpu(next) != cpu_of(rq));
+
 	if (likely(prev != next)) {
 		u64 now;
 #ifdef CONFIG_SCHED_WALT
