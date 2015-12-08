@@ -256,6 +256,7 @@ void touch_softlockup_watchdog_sched(void)
 void touch_softlockup_watchdog(void)
 {
 	touch_softlockup_watchdog_sched();
+	wq_watchdog_touch(raw_smp_processor_id());
 }
 EXPORT_SYMBOL(touch_softlockup_watchdog);
 
