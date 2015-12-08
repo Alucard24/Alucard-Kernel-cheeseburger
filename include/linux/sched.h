@@ -390,6 +390,7 @@ extern void scheduler_tick(void);
 extern void sched_show_task(struct task_struct *p);
 
 #ifdef CONFIG_LOCKUP_DETECTOR
+extern void touch_softlockup_watchdog_sched(void);
 extern void touch_softlockup_watchdog(void);
 extern void touch_softlockup_watchdog_sync(void);
 extern void touch_all_softlockup_watchdogs(void);
@@ -403,6 +404,9 @@ extern void watchdog_enable(unsigned int cpu);
 extern void watchdog_disable(unsigned int cpu);
 extern bool watchdog_configured(unsigned int cpu);
 #else
+static inline void touch_softlockup_watchdog_sched(void)
+{
+}
 static inline void touch_softlockup_watchdog(void)
 {
 }
