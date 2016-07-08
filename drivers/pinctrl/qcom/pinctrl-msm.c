@@ -31,11 +31,12 @@
 #include <linux/reboot.h>
 #include <linux/irqchip/msm-mpm-irq.h>
 #include <linux/suspend.h>
+#include <linux/spmi.h>
+#include <linux/wakeup_reason.h>
 #include "../core.h"
 #include "../pinconf.h"
 #include "pinctrl-msm.h"
 #include "../pinctrl-utils.h"
-#include <linux/wakeup_reason.h>
 #include <linux/cpufreq.h>
 
 #define MAX_NR_GPIO 300
@@ -879,7 +880,7 @@ static bool msm_gpio_irq_handler(struct irq_desc *desc)
 					c0_cpufreq_limit_queue();
 				}
 				printk(KERN_ERR "hwirq %s [irq_num=%d ]triggered\n",irq_to_desc(irq_pin)->action->name,irq_pin);
-				log_wakeup_reason(irq_pin);
+				log_base_wakeup_reason(irq_pin);
 			}
 			//--
 		}
