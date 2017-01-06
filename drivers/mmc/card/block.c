@@ -1173,7 +1173,7 @@ idata_free:
 
 cmd_done:
 	mmc_blk_put(md);
-	if (card->cmdq_init)
+	if (card && card->cmdq_init)
 		wake_up(&card->host->cmdq_ctx.wait);
 	return err;
 }
@@ -4719,4 +4719,3 @@ module_exit(mmc_blk_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Multimedia Card (MMC) block device driver");
-
