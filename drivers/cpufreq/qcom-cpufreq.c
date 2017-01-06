@@ -80,15 +80,12 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 	freqs.new = new_freq;
 	freqs.cpu = policy->cpu;
 
-	trace_cpu_frequency_switch_start(freqs.old, freqs.new, policy->cpu);
 	cpufreq_freq_transition_begin(policy, &freqs);
 
 	rate = new_freq * 1000;
 	rate = clk_round_rate(cpu_clk[policy->cpu], rate);
 	ret = clk_set_rate(cpu_clk[policy->cpu], rate);
 	cpufreq_freq_transition_end(policy, &freqs, ret);
-	if (!ret)
-		trace_cpu_frequency_switch_end(policy->cpu);
 
 	return ret;
 }
@@ -715,7 +712,7 @@ static void c0_cpufreq_limit(struct work_struct *work)
 			LITTLE_CPU_QOS_FREQ, CPUFREQ_RELATION_H);
 		cpufreq_cpu_put(policy);
 	}
-	sched_set_boost(1);
+	//sched_set_boost(1);
 }
 
 void c0_cpufreq_limit_queue(void)
