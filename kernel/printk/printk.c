@@ -3241,7 +3241,7 @@ void show_regs_print_info(const char *log_lvl)
 {
 	dump_stack_print_info(log_lvl);
 
-	printk("%stask: %p task.stack: %p\n",
+	printk("%stask: %pP task.stack: %pP\n",
 	       log_lvl, current, task_stack_page(current));
 }
 
