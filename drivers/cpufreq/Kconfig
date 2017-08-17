@@ -256,8 +256,8 @@ config CPUFREQ_DT
 
 config MSM_TRACK_FREQ_TARGET_INDEX
 	bool "Track cpufreq frequency index"
-	default n
-	depends on CPU_FREQ && ARCH_MSM
+	default y
+	depends on CPU_FREQ && ARCH_MSM8998
 
 if X86
 source "drivers/cpufreq/Kconfig.x86"
