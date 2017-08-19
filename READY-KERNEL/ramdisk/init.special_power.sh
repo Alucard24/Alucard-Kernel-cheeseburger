@@ -27,14 +27,13 @@ function writepid_top_app() {
 }
 ################################################################################
 
-sleep 10
+sleep 5
 
 write /dev/cpuset/background/cpus 0-1
 write /dev/cpuset/system-background/cpus 0-2
 
 sleep 20
 
-FINGERPRINTD=`pidof fingerprintd`
 QSEECOMD=`pidof qseecomd`
 THERMAL-ENGINE=`pidof thermal-engine`
 TIME_DAEMON=`pidof time_daemon`
@@ -60,7 +59,6 @@ SEEMP_HEALTHD=`pidof seemp_healthd`
 ESEPMDAEMON=`pidof esepmdaemon`
 WPA_SUPPLICANT=`pidof wpa_supplicant`
 
-writepid_top_app $FINGERPRINTD
 writepid_sbg $QSEECOMD
 writepid_sbg $THERMAL-ENGINE
 writepid_sbg $TIME_DAEMON

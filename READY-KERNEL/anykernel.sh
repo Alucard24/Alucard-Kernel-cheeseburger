@@ -4,14 +4,14 @@
 ## AnyKernel setup
 # EDIFY properties
 properties() {
-  kernel.string=FrancoKernel by franciscofranco @ xda-developers
-  do.devicecheck=1
-  do.initd=0
-  do.modules=0
-  do.cleanup=0
-  do.cleanuponabort=0
-  device.name1=OnePlus5
-  device.name2=cheeseburger
+kernel.string=AlucardKernel by alucard24 @ xda-developers
+do.devicecheck=1
+do.initd=0
+do.modules=0
+do.cleanup=1
+do.cleanuponabort=1
+device.name1=OnePlus5
+device.name2=cheeseburger
 }
 
 # shell variables
