@@ -58,6 +58,7 @@ MSM_IRQBALANCE=`pidof msm_irqbalance`
 SEEMP_HEALTHD=`pidof seemp_healthd`
 ESEPMDAEMON=`pidof esepmdaemon`
 WPA_SUPPLICANT=`pidof wpa_supplicant`
+SEEMPD=`pidof seempd`
 
 writepid_sbg $QSEECOMD
 writepid_sbg $THERMAL-ENGINE
@@ -83,3 +84,4 @@ writepid_sbg $MSM_IRQBALANCE
 writepid_sbg $SEEMP_HEALTHD
 writepid_sbg $ESEPMDAEMON
 writepid_sbg $WPA_SUPPLICANT
+writepid_sbg $SEEMPD
