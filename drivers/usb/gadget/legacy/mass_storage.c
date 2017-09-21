@@ -242,12 +242,7 @@ MODULE_LICENSE("GPL");
 
 static int __init msg_init(void)
 {
-	int ret;
-
-	ret = usb_composite_probe(&msg_driver);
-	set_bit(0, &msg_registered);
-
-	return ret;
+	return usb_composite_probe(&msg_driver);
 }
 module_init(msg_init);
 
