@@ -52,7 +52,7 @@ on late-fs
     # rip wakeups
     write /sys/module/wakeup/parameters/enable_qcom_rx_wakelock_ws 0
     write /sys/module/wakeup/parameters/enable_wlan_extscan_wl_ws 0
-    write /sys/module/wakeup/parameters/enable_ipa_ws 0
+    # write /sys/module/wakeup/parameters/enable_ipa_ws 0
     write /sys/module/wakeup/parameters/enable_wlan_ws 0
     write /sys/module/wakeup/parameters/enable_timerfd_ws 0
     write /sys/module/wakeup/parameters/enable_netlink_ws 0
