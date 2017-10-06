@@ -29,6 +29,13 @@ function writepid_top_app() {
 
 sleep 5
 
+write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "alucard"
+
+write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "alucard"
+
+write /sys/module/cpu_boost/parameters/input_boost_freq "0:748800 4:576000"
+write /sys/module/cpu_boost/parameters/input_boost_ms 100
+
 write /dev/cpuset/background/cpus 0-1
 write /dev/cpuset/system-background/cpus 0-2
 
