@@ -272,12 +272,9 @@ config CPU_FREQ_GOV_SCHEDALUCARD
 	help
 	  This governor makes decisions based on the utilization data provided
 	  by the scheduler.  It sets the CPU frequency to be proportional to
-	  the utilization/capacity ratio coming from the scheduler.  If the
-	  utilization is frequency-invariant, the new frequency is also
-	  proportional to the maximum available frequency.  If that is not the
-	  case, it is proportional to the current frequency of the CPU.  The
-	  frequency tipping point is at utilization/capacity equal to 80% in
-	  both cases.
+	  the utilization/capacity ratio coming from the scheduler. The
+	  frequency tipping point is at utilization/capacity equal to 80%
+	  by default.
 
 	  If in doubt, say N.
 
