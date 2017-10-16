@@ -1318,6 +1318,9 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 {
 	struct acgov_tunables *tunables;
 	struct cpufreq_policy *policy = sg_policy->policy;
+	struct cpufreq_frequency_table *table = policy->freq_table;
+	unsigned int freq;
+	unsigned long max_cap;
 	int i;
 
 	tunables = kzalloc(sizeof(*tunables), GFP_KERNEL);
@@ -1343,6 +1346,24 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 			tunables->down_pump_step = big_down_pump_step;
 			tunables->nelements = BIG_NFREQS;
 		}
+		/* Auto-populate up_capacity/down_capacity */
+		max_cap = arch_scale_cpu_capacity(NULL, policy->cpu);
+		down_write(&tunables->capacity_sem);
+		for (i = 0; i < tunables->nelements; i++) {
+			if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
+				continue;
+			freq = arch_scale_freq_invariant() ?
+				policy->cpuinfo.max_freq : table[i].frequency;
+			freq = freq + (freq >> 2);
+			tunables->up_capacity[i] = ((max_cap * table[i].frequency) / freq) + 1;
+			if (i == 0) {
+				tunables->down_capacity[i] = 0;
+			} else {
+				tunables->down_capacity[i] = tunables->up_capacity[i - 1];
+			}	
+		}
+		up_write(&tunables->capacity_sem);
+		down_write(&tunables->rate_limit_us_sem);
 		if (policy->up_transition_delay_us && policy->down_transition_delay_us) {
 			for (i = 0; i < tunables->nelements; i++) {
 				tunables->up_rate_limit_us[i] = policy->up_transition_delay_us;
@@ -1361,6 +1382,7 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 				}
 			}
 		}
+		up_write(&tunables->rate_limit_us_sem);
 		if (!have_governor_per_policy())
 			global_tunables = tunables;
 	}
