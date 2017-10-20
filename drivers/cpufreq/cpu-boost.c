@@ -24,8 +24,6 @@
 #include <linux/input.h>
 #include <linux/time.h>
 
-#include "../../kernel/sched/sched.h"
-
 struct cpu_sync {
 	int cpu;
 	unsigned int input_boost_min;
@@ -40,10 +38,10 @@ module_param(input_boost_enabled, uint, 0644);
 static unsigned int input_boost_ms = 40;
 module_param(input_boost_ms, uint, 0644);
 
-static bool sched_boost_on_input;
-module_param(sched_boost_on_input, bool, 0644);
-
-static bool sched_boost_active;
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+static int dynamic_stune_boost = 0;
+module_param(dynamic_stune_boost, uint, 0644);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 static struct delayed_work input_boost_rem;
 static u64 last_input_time;
@@ -169,7 +167,7 @@ static void update_policy_online(void)
 
 static void do_input_boost_rem(struct work_struct *work)
 {
-	unsigned int i, ret;
+	unsigned int i;
 	struct cpu_sync *i_sync_info;
 
 	/* Reset the input_boost_min for all CPUs in the system */
@@ -179,60 +177,41 @@ static void do_input_boost_rem(struct work_struct *work)
 		i_sync_info->input_boost_min = 0;
 	}
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Reset dynamic stune boost value to the default value */
+        dynamic_boost_write(topapp_css, default_topapp_boost);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 	/* Update policies for all online CPUs */
 	update_policy_online();
 
-	if (sched_boost_active) {
-		ret = sched_set_boost(0);
-		if (ret)
-			pr_err("cpu-boost: HMP boost disable failed\n");
-		sched_boost_active = false;
-	}
 }
 
 static void do_input_boost(struct kthread_work *work)
 {
-	unsigned int i, ret;
+	unsigned int i;
 	struct cpu_sync *i_sync_info;
 
 	if (!input_boost_ms)
 		return;
 
 	cancel_delayed_work_sync(&input_boost_rem);
-	if (sched_boost_active) {
-		sched_set_boost(0);
-		sched_boost_active = false;
-	}
 
 	/* Set the input_boost_min for all CPUs in the system */
 	pr_debug("Setting input boost min for all CPUs\n");
 	for_each_possible_cpu(i) {
 		i_sync_info = &per_cpu(sync_info, i);
-
-		// cpu 0-3 -> silver cluster
-		// cpu 4-7 -> gold cluster
-		// to save power there's no point in boosting the
-		// gold cluster core if it doesn't have any runnable
-		// thread at this point in time
-		// since inputs are fairly common we might save some
-		// juice in the long run
-		if (i >= 4 && cpu_rq(i)->nr_running == 0)
-			continue;
-
 		i_sync_info->input_boost_min = i_sync_info->input_boost_freq;
 	}
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Set dynamic stune boost value */
+        if (dynamic_stune_boost > default_topapp_boost)
+                dynamic_boost_write(topapp_css, dynamic_stune_boost);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 	/* Update policies for all online CPUs */
 	update_policy_online();
-
-	/* Enable scheduler boost to migrate tasks to big cluster */
-	if (sched_boost_on_input) {
-		ret = sched_set_boost(1);
-		if (ret)
-			pr_err("cpu-boost: HMP boost enable failed\n");
-		else
-			sched_boost_active = true;
-	}
 
 	queue_delayed_work(system_power_efficient_wq,
 		&input_boost_rem, msecs_to_jiffies(input_boost_ms));
@@ -289,6 +268,11 @@ err2:
 
 static void cpuboost_input_disconnect(struct input_handle *handle)
 {
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Reset dynamic stune boost value to the default value */
+        dynamic_boost_write(topapp_css, default_topapp_boost);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 	input_close_device(handle);
 	input_unregister_handle(handle);
 	kfree(handle);
