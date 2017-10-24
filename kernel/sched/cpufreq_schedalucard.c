@@ -32,6 +32,11 @@ unsigned long boosted_cpu_util(int cpu);
 #define LATENCY_MULTIPLIER			(1000)
 #define ACGOV_KTHREAD_PRIORITY	50
 
+#define OVERWRITE_RATE_LIMIT_US
+#ifdef CONFIG_ARCH_MSM8998
+#undef OVERWRITE_RATE_LIMIT_US
+#endif
+
 struct acgov_tunables {
 	struct gov_attr_set attr_set;
 	unsigned int *up_rate_limit_us;
@@ -1363,6 +1368,7 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 			}	
 		}
 		up_write(&tunables->capacity_sem);
+#ifdef OVERWRITE_RATE_LIMIT_US
 		down_write(&tunables->rate_limit_us_sem);
 		if (policy->up_transition_delay_us && policy->down_transition_delay_us) {
 			for (i = 0; i < tunables->nelements; i++) {
@@ -1383,6 +1389,7 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 			}
 		}
 		up_write(&tunables->rate_limit_us_sem);
+#endif
 		if (!have_governor_per_policy())
 			global_tunables = tunables;
 	}
