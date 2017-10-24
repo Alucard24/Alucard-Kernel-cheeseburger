@@ -123,6 +123,12 @@ on enable-low-power
 	# MISC
 	write /sys/sweep2sleep/sweep2sleep 0
 
+	# Enable UFS powersaving
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkgate_enable 1
+	write /sys/devices/soc/${ro.boot.bootdevice}/hibern8_on_idle_enable 1
+	write /sys/module/lpm_levels/parameters/sleep_disabled N
+
 	# update cpusets now that boot is complete and we want better load balancing
 	write /dev/cpuset/top-app/cpus 0-7
 	write /dev/cpuset/foreground/boost/cpus 0-3,6-7
