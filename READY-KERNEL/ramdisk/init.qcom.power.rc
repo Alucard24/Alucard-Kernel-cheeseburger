@@ -87,6 +87,11 @@ on boot
 	write /dev/cpuset/application/background/cpus 0-7
 	write /dev/cpuset/application/cpus 0-7
 
+	# set default schedTune value for foreground/top-app (only affects EAS)
+	write /dev/stune/foreground/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.boost 1
+
 on enable-low-power
 	# Enable Adaptive LMK
 	write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 1
@@ -119,8 +124,8 @@ on enable-low-power
 	write /sys/module/msm_thermal/core_control/enabled 1
 
 	# Enable input boost configuration
-	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:1056000"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 1000
+	#write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:1056000"
+	write /sys/module/cpu_boost/parameters/input_boost_ms 2000
 
 	# VM tuning
 	write /proc/sys/vm/dirty_background_ratio 20
@@ -155,7 +160,7 @@ on enable-low-power
 	write /dev/cpuset/application/cpus 0-1,4-5
 
 	# Enable Dynamic Stune Boost
-	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 50
+	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 25
 
 	# end boot time fs tune
 	write /sys/block/sda/queue/read_ahead_kb 1024
