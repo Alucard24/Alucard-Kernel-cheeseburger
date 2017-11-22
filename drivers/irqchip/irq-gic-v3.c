@@ -38,6 +38,7 @@
 #include <asm/virt.h>
 
 #include "irq-gic-common.h"
+#include <linux/wakeup_reason.h>
 
 struct redist_region {
 	void __iomem		*redist_base;

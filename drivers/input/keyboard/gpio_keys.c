@@ -369,6 +369,7 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 		return;
 	}
 
+
 	if (type == EV_ABS) {
 		if (state) {
 			KEY_LOGD("%s: key %x-%x, (%d) changed to %d\n",

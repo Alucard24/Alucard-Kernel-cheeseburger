@@ -97,18 +97,6 @@ enum {
 /*******
  * ICL *
 ********/
-static void find_usb_icl_votable(struct pl_data *chip)
-{
-	if (!chip->usb_icl_votable) {
-		chip->usb_icl_votable = find_votable("USB_ICL");
-
-		if (!chip->usb_icl_votable) {
-			pr_err("Couldn't find USB_ICL votable\n");
-			return;
-		}
-	}
-}
-
 static void split_settled(struct pl_data *chip)
 {
 	int slave_icl_pct, total_current_ua;
@@ -139,32 +127,30 @@ static void split_settled(struct pl_data *chip)
 		total_settled_ua = main_settled_ua + chip->pl_settled_ua;
 	}
 
-	pr_info("main_settled_ua=%d, slave_ua=%d, total_settled_ua=%d\n",
-		main_settled_ua, slave_ua, total_settled_ua);
-
-	chip->usb_psy = power_supply_get_by_name("usb");
-	if (!chip->usb_psy) {
-		pr_err("Couldn't get usbpsy while splitting settled\n");
-		return;
+	total_current_ua = get_effective_result_locked(chip->usb_icl_votable);
+	if (total_current_ua < 0) {
+		if (!chip->usb_psy)
+			chip->usb_psy = power_supply_get_by_name("usb");
+		if (!chip->usb_psy) {
+			pr_err("Couldn't get usbpsy while splitting settled\n");
+			return;
+		}
+		/* no client is voting, so get the total current from charger */
+		rc = power_supply_get_property(chip->usb_psy,
+			POWER_SUPPLY_PROP_HW_CURRENT_MAX, &pval);
+		if (rc < 0) {
+			pr_err("Couldn't get max current rc=%d\n", rc);
+			return;
+		}
+		total_current_ua = pval.intval;
 	}
-
-	rc = power_supply_get_property(chip->usb_psy,
-				       POWER_SUPPLY_PROP_CURRENT_MAX,
-				       &pval);
-	if (rc < 0) {
-		pr_err("Couldn't get usb psy -> current max rc=%d\n", rc);
-		return;
-	}
-	total_current_ua = pval.intval;
-
-	pr_info("total_current_ua is %d\n", total_current_ua);
 
 	pval.intval = total_current_ua - slave_ua;
 	/* Set ICL on main charger */
 	rc = power_supply_set_property(chip->main_psy,
 				POWER_SUPPLY_PROP_CURRENT_MAX, &pval);
 	if (rc < 0) {
-		pr_err("Couldn't change main current max rc=%d\n", rc);
+		pr_err("Couldn't change slave suspend state rc=%d\n", rc);
 		return;
 	}
 
@@ -180,7 +166,8 @@ static void split_settled(struct pl_data *chip)
 	chip->total_settled_ua = total_settled_ua;
 	chip->pl_settled_ua = slave_ua;
 
-	pr_info("Split total_current_ua=%d main_settled_ua=%d slave_ua=%d\n",
+	pl_dbg(chip, PR_PARALLEL,
+		"Split total_current_ua=%d main_settled_ua=%d slave_ua=%d\n",
 		total_current_ua, main_settled_ua, slave_ua);
 }
 
@@ -425,7 +412,7 @@ static int pl_fcc_vote_callback(struct votable *votable, void *data,
 
 	if (!chip->main_psy)
 		return 0;
-
+	pr_info("total_fcc_ua=%d\n", total_fcc_ua);
 	if (chip->pl_mode == POWER_SUPPLY_PL_NONE
 	    || get_effective_result_locked(chip->pl_disable_votable)) {
 		pval.intval = total_fcc_ua;
@@ -476,6 +463,7 @@ static int pl_fv_vote_callback(struct votable *votable, void *data,
 	struct pl_data *chip = data;
 	union power_supply_propval pval = {0, };
 	int rc = 0;
+	pr_info("%s,fv_uv=%d\n", __func__, fv_uv);
 
 	if (fv_uv < 0)
 		return 0;
@@ -501,6 +489,77 @@ static int pl_fv_vote_callback(struct votable *votable, void *data,
 			return rc;
 		}
 	}
+
+	return 0;
+}
+
+#define ICL_STEP_UA	25000
+#define PL_DELAY_MS     3000
+static int usb_icl_vote_callback(struct votable *votable, void *data,
+			int icl_ua, const char *client)
+{
+	int rc;
+	struct pl_data *chip = data;
+	union power_supply_propval pval = {0, };
+	bool rerun_aicl = false;
+
+	if (!chip->main_psy)
+		return 0;
+
+	if (client == NULL)
+		icl_ua = INT_MAX;
+
+	/*
+	 * Disable parallel for new ICL vote - the call to split_settled will
+	 * ensure that all the input current limit gets assigned to the main
+	 * charger.
+	 */
+	vote(chip->pl_disable_votable, ICL_CHANGE_VOTER, true, 0);
+
+	/*
+	 * if (ICL < 1400)
+	 *	disable parallel charger using USBIN_I_VOTER
+	 * else
+	 *	instead of re-enabling here rely on status_changed_work
+	 *	(triggered via AICL completed or scheduled from here to
+	 *	unvote USBIN_I_VOTER) the status_changed_work enables
+	 *	USBIN_I_VOTER based on settled current.
+	 */
+	if (icl_ua <= 1400000)
+		vote(chip->pl_enable_votable_indirect, USBIN_I_VOTER, false, 0);
+	else
+		schedule_delayed_work(&chip->status_change_work,
+						msecs_to_jiffies(PL_DELAY_MS));
+
+	/* rerun AICL */
+	/* get the settled current */
+	rc = power_supply_get_property(chip->main_psy,
+			       POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED,
+			       &pval);
+	if (rc < 0) {
+		pr_err("Couldn't get aicl settled value rc=%d\n", rc);
+		return rc;
+	}
+
+	/* rerun AICL if new ICL is above settled ICL */
+	if (icl_ua > pval.intval)
+		rerun_aicl = true;
+
+	if (rerun_aicl) {
+		/* set a lower ICL */
+		pval.intval = max(pval.intval - ICL_STEP_UA, ICL_STEP_UA);
+		power_supply_set_property(chip->main_psy,
+				POWER_SUPPLY_PROP_CURRENT_MAX,
+				&pval);
+	}
+
+	/* set the effective ICL */
+	pval.intval = icl_ua;
+	power_supply_set_property(chip->main_psy,
+			POWER_SUPPLY_PROP_CURRENT_MAX,
+			&pval);
+
+	vote(chip->pl_disable_votable, ICL_CHANGE_VOTER, false, 0);
 
 	return 0;
 }
@@ -591,10 +650,8 @@ static int pl_disable_vote_callback(struct votable *votable,
 		rerun_election(chip->fcc_votable);
 		rerun_election(chip->fv_votable);
 	}
-
-	pl_dbg(chip, PR_PARALLEL, "parallel charging %s\n",
+	pr_info("parallel charging %s\n",
 		   pl_disable ? "disabled" : "enabled");
-
 	return 0;
 }
 
@@ -629,43 +686,16 @@ static bool is_main_available(struct pl_data *chip)
 
 	chip->main_psy = power_supply_get_by_name("main");
 
-	if (chip->main_psy) {
-		find_usb_icl_votable(chip);
-		if (!chip->usb_icl_votable)
-			return false;
-		rerun_election(chip->usb_icl_votable);
-		/*
-		 * WAR: b/36651220, rerun election when we first notice
-		 * main_psy is ready. Before that, all callbacks have done
-		 * nothing and returned 0.
-		 */
-		rerun_election(chip->fcc_votable);
-		rerun_election(chip->fv_votable);
-		rerun_election(chip->pl_disable_votable);
-		rerun_election(chip->pl_awake_votable);
-	}
-
 	return !!chip->main_psy;
 }
 
 static bool is_batt_available(struct pl_data *chip)
 {
-	if (chip->batt_psy)
-		return true;
-
-	chip->batt_psy = power_supply_get_by_name("battery");
+	if (!chip->batt_psy)
+		chip->batt_psy = power_supply_get_by_name("battery");
 
 	if (!chip->batt_psy)
 		return false;
-
-	/*
-	 * WAR: b/36651220, rerun election when we first notice main_psy is
-	 * ready. Before that, all callbacks have done nothing and returned 0.
-	 */
-	rerun_election(chip->fcc_votable);
-	rerun_election(chip->fv_votable);
-	rerun_election(chip->pl_disable_votable);
-	rerun_election(chip->pl_awake_votable);
 
 	return true;
 }
@@ -962,6 +992,14 @@ int qcom_batt_init(void)
 		goto destroy_votable;
 	}
 
+	chip->usb_icl_votable = create_votable("USB_ICL", VOTE_MIN,
+					usb_icl_vote_callback,
+					chip);
+	if (IS_ERR(chip->usb_icl_votable)) {
+		rc = PTR_ERR(chip->usb_icl_votable);
+		goto destroy_votable;
+	}
+
 	chip->pl_disable_votable = create_votable("PL_DISABLE", VOTE_SET_ANY,
 					pl_disable_vote_callback,
 					chip);
@@ -1030,6 +1068,7 @@ destroy_votable:
 	destroy_votable(chip->pl_disable_votable);
 	destroy_votable(chip->fv_votable);
 	destroy_votable(chip->fcc_votable);
+	destroy_votable(chip->usb_icl_votable);
 release_wakeup_source:
 	wakeup_source_unregister(chip->pl_ws);
 cleanup:

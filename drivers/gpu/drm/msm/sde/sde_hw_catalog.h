@@ -57,6 +57,8 @@
 #define SDE_COLOR_PROCESS_MAJOR(version) (((version) & 0xFFFF0000) >> 16)
 #define SDE_COLOR_PROCESS_MINOR(version) ((version) & 0xFFFF)
 
+#define SSPP_NAME_SIZE 12
+
 /**
  * MDP TOP BLOCK features
  * @SDE_MDP_PANIC_PER_PIPE Panic configuration needs to be be done per pipe
@@ -455,12 +457,14 @@ struct sde_ctl_cfg {
  * @sblk:              SSPP sub-blocks information
  * @xin_id:            bus client identifier
  * @clk_ctrl           clock control identifier
+ * @name               source pipe name
  */
 struct sde_sspp_cfg {
 	SDE_HW_BLK_INFO;
 	const struct sde_sspp_sub_blks *sblk;
 	u32 xin_id;
 	enum sde_clk_ctrl_type clk_ctrl;
+	char name[SSPP_NAME_SIZE];
 };
 
 /**

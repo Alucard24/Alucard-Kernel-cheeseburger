@@ -3623,6 +3623,12 @@ int ufshcd_read_health_desc(struct ufs_hba *hba, u8 *buf, u32 size)
 	return ufshcd_read_desc(hba, QUERY_DESC_IDN_HEALTH, 0, buf, size);
 }
 
+/* liochen@BSP 2016/11/30, Add ufs info into *##*37847# */
+int ufshcd_read_geometry_desc(struct ufs_hba *hba, u8 *buf, u32 size)
+{
+       return ufshcd_read_desc(hba, QUERY_DESC_IDN_GEOMETRY, 0, buf, size);
+}
+
 /**
  * ufshcd_read_string_desc - read string descriptor
  * @hba: pointer to adapter instance
@@ -5212,12 +5218,14 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 			result = DID_ERROR << 16;
 			dev_err(hba->dev,
 				"Reject UPIU not fully implemented\n");
+			WARN_ON(1);
 			break;
 		default:
 			result = DID_ERROR << 16;
 			dev_err(hba->dev,
 				"Unexpected request response code = %x\n",
 				result);
+			WARN_ON(1);
 			break;
 		}
 		break;
@@ -5248,6 +5256,7 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 		 */
 		__ufshcd_print_host_regs(hba, true);
 		ufshcd_print_host_state(hba);
+		WARN_ON(1);
 		break;
 	} /* end of switch */
 
@@ -7389,6 +7398,10 @@ static int ufshcd_probe_hba(struct ufs_hba *hba)
 			}
 			hba->clk_scaling.is_allowed = true;
 		}
+
+
+		/* liochen@BSP, 2016/11/30, Add ufs info into *##*37847# */
+		ufs_fill_info(hba);
 
 		scsi_scan_host(hba->host);
 		pm_runtime_put_sync(hba->dev);

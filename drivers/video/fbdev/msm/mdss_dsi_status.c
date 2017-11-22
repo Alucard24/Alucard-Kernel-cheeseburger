@@ -135,6 +135,9 @@ irqreturn_t hw_vsync_handler(int irq, void *data)
 		pr_err("%s: DSI ctrl not available\n", __func__);
 		return IRQ_HANDLED;
 	}
+    complete(&ctrl_pdata->te_comp);
+
+//#endif
 
 	if (pstatus_data) {
 		spin_lock_irqsave(&pstatus_data->te.spinlock, flag);
@@ -148,8 +151,9 @@ irqreturn_t hw_vsync_handler(int irq, void *data)
 	} else
 		pr_err("Pstatus data is NULL\n");
 
-	if (!atomic_read(&ctrl_pdata->te_irq_ready))
-		atomic_inc(&ctrl_pdata->te_irq_ready);
+	//if (!atomic_read(&ctrl_pdata->te_irq_ready))
+	//	atomic_inc(&ctrl_pdata->te_irq_ready);
+//#endif
 
 	return IRQ_HANDLED;
 }

@@ -180,6 +180,8 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		lowmem_print(1, "Killing '%s' (%d), adj %hd,\n" \
 			        "   to free %ldkB on behalf of '%s' (%d) because\n" \
 			        "   cache %ldkB is below limit %ldkB for oom_score_adj %hd\n" \
+					"   SHMEM is %ldkB\n" \
+					"   SwapCached is %ldkB\n" \
 			        "   Free memory is %ldkB above reserved\n",
 			     selected->comm, selected->pid,
 			     selected_oom_score_adj,
@@ -187,6 +189,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			     current->comm, current->pid,
 			     cache_size, cache_limit,
 			     min_score_adj,
+			     global_page_state(NR_SHMEM) *
+			     (long)(PAGE_SIZE / 1024),
+			     total_swapcache_pages() *
+			     (long)(PAGE_SIZE / 1024),
 			     free);
 		lowmem_deathpending_timeout = jiffies + HZ;
 		rem += selected_tasksize;

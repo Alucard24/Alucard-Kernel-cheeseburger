@@ -457,6 +457,8 @@ static inline void hdmi_tx_ack_state(
 			!hdmi_tx_is_dvi_mode(hdmi_ctrl))
 		hdmi_ctrl->ext_audio_data.intf_ops.notify(hdmi_ctrl->ext_pdev,
 				val);
+
+	hdmi_tx_send_audio_notification(hdmi_ctrl, val);
 }
 
 static struct hdmi_tx_ctrl *hdmi_tx_get_drvdata_from_panel_data(

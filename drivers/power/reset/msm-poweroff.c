@@ -71,7 +71,11 @@ static void scm_disable_sdi(void);
 #endif
 
 static int in_panic;
+#ifdef CONFIG_DLOAD_MODE_DEFAULT
+static int download_mode = -1;
+#else
 static int download_mode = 1;
+#endif
 static struct kobject dload_kobj;
 static void *dload_mode_addr, *dload_type_addr;
 static bool dload_mode_enabled;
@@ -98,6 +102,11 @@ struct reset_attribute {
 
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
+
+int oem_get_download_mode(void)
+{
+	return download_mode;
+}
 
 static int panic_prep_restart(struct notifier_block *this,
 			      unsigned long event, void *ptr)
@@ -136,7 +145,7 @@ int scm_set_dload_mode(int arg1, int arg2)
 static void set_dload_mode(int on)
 {
 	int ret;
-
+	pr_err("set_dload_mode %s\n", on ? "ON" : "OFF");
 	if (dload_mode_addr) {
 		__raw_writel(on ? 0xE47B337D : 0, dload_mode_addr);
 		__raw_writel(on ? 0xCE14091A : 0,
@@ -147,6 +156,11 @@ static void set_dload_mode(int on)
 	ret = scm_set_dload_mode(on ? SCM_DLOAD_MODE : 0, 0);
 	if (ret)
 		pr_err("Failed to set secure DLOAD mode: %d\n", ret);
+
+	if (on)
+		qpnp_pon_set_restart_reason(0x00);
+	else
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
 
 	if (!on)
 		scm_disable_sdi();
@@ -311,6 +325,7 @@ static void halt_spmi_pmic_arbiter(void)
 static void msm_restart_prepare(const char *cmd)
 {
 	bool need_warm_reset = false;
+	bool oem_panic_record = false;
 
 	/* configure reset reason back to 0 before reset */
 	qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
@@ -324,6 +339,7 @@ static void msm_restart_prepare(const char *cmd)
 
 	set_dload_mode(download_mode &&
 			(in_panic || restart_mode == RESTART_DLOAD));
+
 #endif
 
 	if (qpnp_pon_check_hard_reset_stored()) {
@@ -336,9 +352,13 @@ static void msm_restart_prepare(const char *cmd)
 		need_warm_reset = (get_dload_mode() ||
 				(cmd != NULL && cmd[0] != '\0'));
 	}
-
+	if (!download_mode &&
+			(in_panic || restart_mode == RESTART_DLOAD)) {
+		oem_panic_record = true;
+	}
+	qpnp_pon_set_restart_reason(0x00);
 	/* Hard reset the PMIC unless memory contents must be maintained. */
-	if (need_warm_reset) {
+	if (need_warm_reset || oem_panic_record) {
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
 	} else {
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
@@ -347,7 +367,31 @@ static void msm_restart_prepare(const char *cmd)
 	if (in_panic) {
 		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
 	} else if (cmd != NULL) {
-		if (!strncmp(cmd, "bootloader", 10)) {
+		if (!strncmp(cmd, "rf", 2)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_RF);
+			__raw_writel(RF_MODE, restart_reason);
+		} else if (!strncmp(cmd, "wlan", 4)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_WLAN);
+			__raw_writel(WLAN_MODE, restart_reason);
+		} else if (!strncmp(cmd, "mos", 3)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_MOS);
+			__raw_writel(MOS_MODE, restart_reason);
+		} else if (!strncmp(cmd, "ftm", 3)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_FACTORY);
+			__raw_writel(FACTORY_MODE, restart_reason);
+		} else if (!strncmp(cmd, "kernel", 6)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_KERNEL);
+			__raw_writel(KERNEL_MODE, restart_reason);
+		} else if (!strncmp(cmd, "modem", 5)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_MODEM);
+			__raw_writel(MODEM_MODE, restart_reason);
+		} else if (!strncmp(cmd, "android", 7)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_ANDROID);
+			__raw_writel(ANDROID_MODE, restart_reason);
+		} else if (!strncmp(cmd, "aging", 5)) {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_AGING);
+			__raw_writel(AGING_MODE, restart_reason);
+		} else if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
 			__raw_writel(0x77665500, restart_reason);
@@ -397,6 +441,10 @@ static void msm_restart_prepare(const char *cmd)
 		__raw_writel(0x77665501, restart_reason);
 	}
 
+	if (oem_panic_record) {
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
+		__raw_writel(OEM_PANIC, restart_reason);
+	}
 	flush_console();
 	flush_cache_all();
 
@@ -458,6 +506,7 @@ static void do_msm_poweroff(void)
 	pr_notice("Powering off the SoC\n");
 
 	set_dload_mode(0);
+	qpnp_pon_set_restart_reason(0x00);
 	qpnp_pon_system_pwr_off(PON_POWER_OFF_SHUTDOWN);
 
 	halt_spmi_pmic_arbiter();

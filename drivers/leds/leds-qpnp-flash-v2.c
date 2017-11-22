@@ -159,6 +159,8 @@
 #define	FLASH_LED_SAFETY_TMR_DISABLED		0x13
 #define	FLASH_LED_MAX_TOTAL_CURRENT_MA		3750
 
+#define	FLASH_LED_MIN_CURRENT_MA		25
+
 /* notifier call chain for flash-led irqs */
 static ATOMIC_NOTIFIER_HEAD(irq_notifier_list);
 
@@ -935,13 +937,12 @@ static void qpnp_flash_led_aggregate_max_current(struct flash_node_data *fnode)
 static void qpnp_flash_led_node_set(struct flash_node_data *fnode, int value)
 {
 	int prgm_current_ma = value;
-	int min_ma = fnode->ires_ua / 1000;
 	struct qpnp_flash_led *led = dev_get_drvdata(&fnode->pdev->dev);
 
 	if (value <= 0)
 		prgm_current_ma = 0;
-	else if (value < min_ma)
-		prgm_current_ma = min_ma;
+	else if (value < FLASH_LED_MIN_CURRENT_MA)
+		prgm_current_ma = FLASH_LED_MIN_CURRENT_MA;
 
 	prgm_current_ma = min(prgm_current_ma, fnode->max_current);
 	fnode->current_ma = prgm_current_ma;

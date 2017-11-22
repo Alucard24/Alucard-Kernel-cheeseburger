@@ -29,12 +29,7 @@
 #include <linux/vmalloc.h>
 #include <asm/page.h>
 
-struct persistent_ram_buffer {
-	uint32_t    sig;
-	atomic_t    start;
-	atomic_t    size;
-	uint8_t     data[0];
-};
+
 
 static int persistent_ram_buffer_map_alt(struct persistent_ram_zone *prz);
 

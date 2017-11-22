@@ -258,3 +258,8 @@ zarlink	Zarlink Semiconductor
 zii	Zodiac Inflight Innovations
 zte	ZTE Corp.
 htc	HTC Corporation
+oem Oneplus Technologies
+oneplus OnePlus Technologies
+fpc fpc1020
+HWK synaptics
+android Android O
