@@ -86,23 +86,23 @@ static unsigned int little_up_target_loads[LITTLE_NFREQS] = {
 	70,
 	70,
 	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
+	75,
+	75,
+	75,
+	75,
 	83,
 	83,
 	83,
 	83,
 	83,
-	83,
-	83,
-	83,
-	95,
-	95,
+	85,
+	85,
+	90,
+	90,
+	90,
+	90,
+	90,
+	90,
 	0
 };
 
@@ -112,91 +112,91 @@ static unsigned int little_down_target_loads[LITTLE_NFREQS] = {
 	70,
 	70,
 	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
+	75,
+	75,
+	75,
+	75,
 	83,
 	83,
 	83,
 	83,
 	83,
-	83,
-	83,
-	83,
-	83,
-	95,
-	95
+	85,
+	85,
+	90,
+	90,
+	90,
+	90,
+	90,
+	90
 };
 
 static unsigned int big_up_target_loads[BIG_NFREQS] = {
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	90,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95,
+	74,
+	74,
+	74,
+	74,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	85,
+	85,
+	85,
+	85,
+	85,
+	85,
+	86,
+	86,
+	86,
+	91,
+	91,
+	91,
+	91,
+	91,
+	93,
+	93,
+	93,
+	93,
 	0
 };
 
 static unsigned int big_down_target_loads[BIG_NFREQS] = {
 	0,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	70,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	83,
-	90,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95,
-	95
+	74,
+	74,
+	74,
+	74,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	75,
+	85,
+	85,
+	85,
+	85,
+	85,
+	85,
+	86,
+	86,
+	86,
+	91,
+	91,
+	91,
+	91,
+	91,
+	93,
+	93,
+	93,
+	93
 };
 
 static unsigned int little_up_target_frequency_delay[LITTLE_NFREQS] = {
@@ -208,19 +208,19 @@ static unsigned int little_up_target_frequency_delay[LITTLE_NFREQS] = {
 	0,
 	0,
 	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
+	150000,
+	150000,
+	150000,
+	150000,
+	150000,
+	150000,
+	150000,
+	175000,
+	175000,
+	175000,
+	175000,
+	175000,
+	175000,
 	0
 };
 
@@ -261,25 +261,25 @@ static unsigned int big_up_target_frequency_delay[BIG_NFREQS] = {
 	0,
 	0,
 	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
-	19000,
+	200000,
+	200000,
+	200000,
+	200000,
+	200000,
+	200000,
+	200000,
+	175000,
+	175000,
+	175000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
+	80000,
 	0
 };
 
@@ -323,7 +323,7 @@ static unsigned int little_up_target_pump_step[LITTLE_NFREQS] = {
 	2,
 	2,
 	2,
-	1,
+	2,
 	1,
 	1,
 	1,
@@ -371,9 +371,9 @@ static unsigned int big_up_target_pump_step[BIG_NFREQS] = {
 	2,
 	2,
 	2,
-	1,
-	1,
-	1,
+	2,
+	2,
+	2,
 	1,
 	1,
 	1,
@@ -435,11 +435,11 @@ static unsigned int big_down_target_pump_step[BIG_NFREQS] = {
 	1
 };
 
-#define DEFAULT_TIMER_RATE (20 * USEC_PER_MSEC)
+#define DEFAULT_TIMER_RATE (40 * USEC_PER_MSEC)
 
-#define FREQ_RESPONSIVENESS_LITTLE	1036800
-#define FREQ_RESPONSIVENESS_BIG		576000
-#define LOAD_RESPONSIVENESS_LITTLE	30
+#define FREQ_RESPONSIVENESS_LITTLE	883200
+#define FREQ_RESPONSIVENESS_BIG		1574400
+#define LOAD_RESPONSIVENESS_LITTLE	40
 #define LOAD_RESPONSIVENESS_BIG		40
 struct cpufreq_alucard_tunables {
 	int usage_count;
@@ -474,7 +474,8 @@ struct cpufreq_alucard_tunables {
 	 * Max additional time to wait in idle, beyond timer_rate, at speeds
 	 * above minimum before wakeup to reduce speed, or -1 if unnecessary.
 	 */
-#define DEFAULT_TIMER_SLACK (4 * DEFAULT_TIMER_RATE)
+#define DEFAULT_TIMER_SLACK_LITTLE (384050)
+#define DEFAULT_TIMER_SLACK_BIG    (178470)
 	int timer_slack_val;
 	bool io_is_busy;
 
@@ -1918,6 +1919,7 @@ static struct cpufreq_alucard_tunables *alloc_tunable(
 		tunables->down_target_pump_step = little_down_target_pump_step;
 		tunables->ntarget_pump_step = LITTLE_NFREQS;
 		tunables->ignore_responsiveness_on_notif = true;
+		tunables->timer_slack_val = DEFAULT_TIMER_SLACK_LITTLE;
 	} else {
 		tunables->load_responsiveness = LOAD_RESPONSIVENESS_BIG;
 		tunables->freq_responsiveness = FREQ_RESPONSIVENESS_BIG;
@@ -1931,11 +1933,11 @@ static struct cpufreq_alucard_tunables *alloc_tunable(
 		tunables->down_target_pump_step = big_down_target_pump_step;
 		tunables->ntarget_pump_step = BIG_NFREQS;
 		tunables->ignore_responsiveness_on_notif = true;
+		tunables->timer_slack_val = DEFAULT_TIMER_SLACK_BIG;
 	}
 	tunables->ignore_freq_delay_on_notif = true;
 	tunables->timer_rate = DEFAULT_TIMER_RATE;
-	tunables->timer_slack_val = DEFAULT_TIMER_SLACK;
-	tunables->io_is_busy = true;
+	tunables->io_is_busy = false;
 #ifdef USE_NOT_ONLY_SCHED_LOAD
 	tunables->use_sched_load = true;
 #endif
