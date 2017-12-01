@@ -586,14 +586,14 @@ static struct sched_group_energy energy_core_a15 = {
 static inline
 const struct sched_group_energy * const cpu_cluster_energy(int cpu)
 {
-	return cpu_topology[cpu].socket_id ? &energy_cluster_a7 :
+	return cpu_topology[cpu].cluster_id ? &energy_cluster_a7 :
 			&energy_cluster_a15;
 }
 
 static inline
 const struct sched_group_energy * const cpu_core_energy(int cpu)
 {
-	return cpu_topology[cpu].socket_id ? &energy_core_a7 :
+	return cpu_topology[cpu].cluster_id ? &energy_core_a7 :
 			&energy_core_a15;
 }
 
