@@ -325,9 +325,3 @@ config CPU_PM
 config DEDUCE_WAKEUP_REASONS
 	bool
 	default n
-
-config PM_SUSPEND_DEBUG_OP
-        bool "Print pinctl clk regulator stats, when enter lpm_suspend"
-        depends on PM_SLEEP
-        default y
-
