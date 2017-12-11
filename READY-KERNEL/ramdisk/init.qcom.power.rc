@@ -125,7 +125,7 @@ on enable-low-power
 
 	# Enable input boost configuration
 	# write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:1056000"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 2000
+	write /sys/module/cpu_boost/parameters/input_boost_ms 1500
 
 	# VM tuning
 	write /proc/sys/vm/dirty_background_ratio 20
@@ -160,7 +160,7 @@ on enable-low-power
 	write /dev/cpuset/application/cpus 0-1,4-5
 
 	# Enable Dynamic Stune Boost
-	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 25
+	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 15
 
 	# end boot time fs tune
 	write /sys/block/sda/queue/read_ahead_kb 1024
