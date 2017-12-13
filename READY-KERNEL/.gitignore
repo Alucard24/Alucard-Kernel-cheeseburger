@@ -1,0 +1,7 @@
+*.img
+*.zip
+*.ko
+Image.gz-dtb
+dtb
+zImage
+.config
