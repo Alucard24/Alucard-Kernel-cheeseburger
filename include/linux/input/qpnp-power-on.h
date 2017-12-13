@@ -58,6 +58,7 @@ struct qpnp_pon {
 	struct pon_regulator	*pon_reg_cfg;
 	struct list_head	list;
 	struct delayed_work	bark_work;
+	struct delayed_work	press_work;
 	struct dentry		*debugfs;
 	int			pon_trigger_reason;
 	int			pon_power_off_reason;

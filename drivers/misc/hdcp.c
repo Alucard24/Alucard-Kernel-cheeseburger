@@ -12,10 +12,13 @@
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
+#include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/sched.h>
 #include <linux/list.h>
@@ -30,6 +33,8 @@
 #include <linux/errno.h>
 #include <linux/hdcp_qseecom.h>
 #include <linux/kthread.h>
+#include <linux/of.h>
+#include <video/msm_hdmi_hdcp_mgr.h>
 
 #include "qseecom_kernel.h"
 
@@ -541,6 +546,24 @@ struct hdcp_lib_message_map {
 	int msg_id;
 	const char *msg_name;
 };
+
+struct msm_hdcp_mgr {
+	struct platform_device *pdev;
+	dev_t dev_num;
+	struct cdev cdev;
+	struct class *class;
+	struct device *device;
+	struct HDCP_V2V1_MSG_TOPOLOGY cached_tp;
+	u32 tp_msgid;
+	void *client_ctx;
+	struct hdcp_lib_handle *handle;
+};
+
+#define CLASS_NAME "hdcp"
+#define DRIVER_NAME "msm_hdcp"
+
+static struct msm_hdcp_mgr *hdcp_drv_mgr;
+static struct hdcp_lib_handle *drv_client_handle;
 
 static void hdcp_lib_clean(struct hdcp_lib_handle *handle);
 static void hdcp_lib_init(struct hdcp_lib_handle *handle);
@@ -2393,7 +2416,13 @@ int hdcp_library_register(struct hdcp_register_data *data)
 	}
 
 	*data->hdcp_ctx = handle;
+	/* Cache the client ctx to be used later
+	 * HDCP driver probe happens earlier than
+	 * SDE driver probe hence caching it to
+	 * be used later.
+	 */
 
+	drv_client_handle = handle;
 	handle->thread = kthread_run(kthread_worker_fn,
 				     &handle->worker, "hdcp_tz_lib");
 

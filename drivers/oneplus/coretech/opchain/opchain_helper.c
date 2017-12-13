@@ -134,7 +134,7 @@ EXPORT_SYMBOL(opc_select_path_cb);
 void opc_update_cpu_cravg_demand(u64 load)
 {
 	if (opc_update_cpu_cravg_demand_t)
-		opc_update_cpu_cravg_demand_t(load, sched_ravg_window);
+		opc_update_cpu_cravg_demand_t(load, walt_ravg_window);
 }
 EXPORT_SYMBOL(opc_update_cpu_cravg_demand);
 
@@ -146,9 +146,10 @@ EXPORT_SYMBOL(opc_update_cpu_cravg_demand_cb);
 
 u64 opc_cpu_cravg_sync(int cpu, int sync, int op_path)
 {
-	if (opc_cpu_cravg_sync_t)
+	/*if (opc_cpu_cravg_sync_t)
 		return opc_cpu_cravg_sync_t(cpu, cpu_cravg_sync(cpu, sync), op_path);
-	return cpu_cravg_sync(cpu, sync);
+	return cpu_cravg_sync(cpu, sync);*/
+	return 0;
 }
 EXPORT_SYMBOL(opc_cpu_cravg_sync);
 
@@ -192,7 +193,8 @@ EXPORT_SYMBOL(opc_num_present_cpus);
 
 unsigned int opc_task_load(struct task_struct *p)
 {
-	return task_load(p);
+	//return task_load(p);
+	return 0;
 }
 EXPORT_SYMBOL(opc_task_load);
 

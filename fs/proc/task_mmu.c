@@ -761,65 +761,65 @@ static int show_smap(struct seq_file *m, void *v, int is_pid)
 		ret = SEQ_SKIP;
 	}
     if (strcmp(current->comm, "android.bg") == 0) {
-        if ((unsigned long)(mss.pss >> (10 + PSS_SHIFT)) > 0) {
+        if ((unsigned long)(mss->pss >> (10 + PSS_SHIFT)) > 0) {
             seq_printf(m,
             "Pss:            %8lu kB\n",
-            (unsigned long)(mss.pss >> (10 + PSS_SHIFT)));
+            (unsigned long)(mss->pss >> (10 + PSS_SHIFT)));
         }
-        if ((mss.private_clean >> 10) > 0) {
+        if ((mss->private_clean >> 10) > 0) {
             seq_printf(m,
             "Private_Clean:  %8lu kB\n",
-            mss.private_clean >> 10);
+            mss->private_clean >> 10);
         }
-        if ((mss.private_dirty >> 10) > 0) {
+        if ((mss->private_dirty >> 10) > 0) {
             seq_printf(m,
             "Private_Dirty:  %8lu kB\n",
-            mss.private_dirty >> 10);
+            mss->private_dirty >> 10);
         }
-        if ((unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)) > 0) {
+        if ((unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)) > 0) {
             seq_printf(m,
             "SwapPss:        %8lu kB\n",
-            (unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)));
+            (unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)));
         }
         m_cache_vma(m, vma);
         return 0;
     }
     if (strcmp(current->comm, "system_server") == 0) {
-        if ((unsigned long)(mss.pss >> (10 + PSS_SHIFT)) > 0) {
+        if ((unsigned long)(mss->pss >> (10 + PSS_SHIFT)) > 0) {
             seq_printf(m,
             "Pss:            %8lu kB\n",
-            (unsigned long)(mss.pss >> (10 + PSS_SHIFT)));
+            (unsigned long)(mss->pss >> (10 + PSS_SHIFT)));
         }
-        if ((mss.private_clean >> 10) > 0) {
+        if ((mss->private_clean >> 10) > 0) {
             seq_printf(m,
             "Private_Clean:  %8lu kB\n",
-            mss.private_clean >> 10);
+            mss->private_clean >> 10);
         }
-        if ((mss.private_dirty >> 10) > 0) {
+        if ((mss->private_dirty >> 10) > 0) {
             seq_printf(m,
             "Private_Dirty:  %8lu kB\n",
-            mss.private_dirty >> 10);
+            mss->private_dirty >> 10);
         }
-        if ((unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)) > 0) {
+        if ((unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)) > 0) {
             seq_printf(m,
             "SwapPss:        %8lu kB\n",
-            (unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)));
+            (unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)));
         }
-        if ((unsigned long)(mss.shared_clean >>10 ) > 0) {
+        if ((unsigned long)(mss->shared_clean >>10 ) > 0) {
             seq_printf(m,
             "Shared_Clean:        %8lu kB\n",
-            (unsigned long)(mss.shared_clean >> 10 ) );
+            (unsigned long)(mss->shared_clean >> 10 ) );
         }
-        if ((unsigned long)(mss.shared_dirty >> 10) > 0) {
+        if ((unsigned long)(mss->shared_dirty >> 10) > 0) {
             seq_printf(m,
             "Shared_Dirty:        %8lu kB\n",
-            (unsigned long)(mss.shared_dirty >>10));
+            (unsigned long)(mss->shared_dirty >>10));
         }
 
-       if ((unsigned long)(mss.swap >> 10) > 0) {
+       if ((unsigned long)(mss->swap >> 10) > 0) {
             seq_printf(m,
             "Swap:        %8lu kB\n",
-            (unsigned long)(mss.swap >> 10) );
+            (unsigned long)(mss->swap >> 10) );
         }
         m_cache_vma(m, vma);
         return 0;
