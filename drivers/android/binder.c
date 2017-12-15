@@ -4082,14 +4082,6 @@ retry:
 		case BINDER_WORK_TRANSACTION: {
 			binder_inner_proc_unlock(proc);
 			t = container_of(w, struct binder_transaction, work);
-            //MaJunhai@OnePlus..MultiMediaService, add /proc/process/task/taskid/wakeup || /proc/process/wakeup for ion tracking
-            if(t->from) {
-                task_thread_info(current)->pid = t->from->pid;
-                task_thread_info(current)->tgid = t->from->proc->pid;
-                //printk("%s to waken by %5d:%5d\n", current->comm, task_thread_info(current)->tgid, task_thread_info(current)->pid);
-                //printk("%s to waken by %5d:%5d\n", current->comm, t->from->proc->pid, t->from->pid);
-            }
-           //#endif
 		} break;
 		case BINDER_WORK_RETURN_ERROR: {
 			struct binder_error *e = container_of(
