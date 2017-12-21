@@ -2483,7 +2483,6 @@ struct cpu_cycle_counter_cb {
     u64 (*get_cpu_cycle_counter)(int cpu);
 };
 
-static inline void free_task_load_ptrs(struct task_struct *p) { }
 extern int sched_set_wake_up_idle(struct task_struct *p, int wake_up_idle);
 
 static inline int sched_set_boost(int enable)
