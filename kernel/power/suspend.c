@@ -569,9 +569,7 @@ int pm_suspend(suspend_state_t state)
 		return -EINVAL;
 
 	pm_suspend_marker("entry");
-
 	error = enter_state(state);
-
 	if (error) {
 		suspend_stats.fail++;
 		dpm_save_failed_errno(error);

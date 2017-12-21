@@ -1243,26 +1243,26 @@ static struct ctl_table kern_table[] = {
 		.extra2		= &one,
 	},
 #endif
-#if defined(CONFIG_ARM) || defined(CONFIG_ARM64)        
-    {        
-        .procname    = "boot_reason",        
-        .data        = &boot_reason,        
-        .maxlen        = sizeof(int),        
-        .mode        = 0444,        
-        .proc_handler    = proc_dointvec,        
-    },        
-        
-    {        
-        .procname    = "cold_boot",        
-        .data        = &cold_boot,        
-        .maxlen        = sizeof(int),        
-        .mode        = 0444,        
-        .proc_handler    = proc_dointvec,        
-    },        
-#endif        
-/*        
- * NOTE: do not add new entries to this table unless you have read        
- * Documentation/sysctl/ctl_unnumbered.txt        
+#if defined(CONFIG_ARM) || defined(CONFIG_ARM64)
+	{
+		.procname	= "boot_reason",
+		.data		= &boot_reason,
+		.maxlen		= sizeof(int),
+		.mode		= 0444,
+		.proc_handler	= proc_dointvec,
+	},
+
+	{
+		.procname	= "cold_boot",
+		.data		= &cold_boot,
+		.maxlen		= sizeof(int),
+		.mode		= 0444,
+		.proc_handler	= proc_dointvec,
+	},
+#endif
+/*
+ * NOTE: do not add new entries to this table unless you have read
+ * Documentation/sysctl/ctl_unnumbered.txt
  */
 	{ }
 };
@@ -1690,21 +1690,21 @@ static struct ctl_table vm_table[] = {
 		.extra2		= (void *)&mmap_rnd_compat_bits_max,
 	},
 #endif
-#ifdef CONFIG_SWAP        
-    {        
-        .procname    = "swap_ratio",        
-        .data        = &sysctl_swap_ratio,        
-        .maxlen        = sizeof(sysctl_swap_ratio),        
-        .mode        = 0644,        
-        .proc_handler    = proc_dointvec_minmax,        
-    },        
-    {        
-        .procname    = "swap_ratio_enable",        
-        .data        = &sysctl_swap_ratio_enable,        
-        .maxlen        = sizeof(sysctl_swap_ratio_enable),        
-        .mode        = 0644,        
-        .proc_handler    = proc_dointvec_minmax,        
-    },        
+#ifdef CONFIG_SWAP
+	{
+		.procname	= "swap_ratio",
+		.data		= &sysctl_swap_ratio,
+		.maxlen		= sizeof(sysctl_swap_ratio),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+	},
+	{
+		.procname	= "swap_ratio_enable",
+		.data		= &sysctl_swap_ratio_enable,
+		.maxlen		= sizeof(sysctl_swap_ratio_enable),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+	},
 #endif
 	{ }
 };
