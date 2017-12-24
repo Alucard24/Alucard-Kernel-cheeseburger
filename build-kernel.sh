@@ -102,7 +102,7 @@ BUILD_NOW()
 		# create the flashable zip file from the contents of the READY-KERNEL directory
 		cd READY-KERNEL/;
 		echo "Creating flashable zip..........."
-		zip -r Kernel-EAS-OP5-"$(date +"[%y-%m-%d]-[%H-%M]-N-PWR-CORE")".zip * -x@exclude.list >/dev/null
+		zip -r Kernel-EAS-OP5-"$(date +"[%y-%m-%d]-[%H-%M]-O-PWR-CORE")".zip * -x@exclude.list >/dev/null
 		cd $KERNELDIR;
 		echo "Cleaning";
 		rm "$KERNELDIR"/READY-KERNEL/zImage;
