@@ -321,10 +321,7 @@ _dtbinst_pre_:
 # mkdtimg
 #----------------------------------------------------------------------------
 quiet_cmd_mkdtimg = DTBOIMG $@
-cmd_mkdtimg = mkdtimg cfg_create $@ $<; \
-	if [ ! -z "$(2)" ]; then \
-		dd if=/dev/zero bs=1 count=$$(((`stat -c%s $@`+$(2)-1)/$(2)*$(2)-`stat -c%s $@`)) >> $@; \
-	fi
+cmd_mkdtimg = mkdtimg cfg_create $@ $<
 
 # cat
 # ---------------------------------------------------------------------------
