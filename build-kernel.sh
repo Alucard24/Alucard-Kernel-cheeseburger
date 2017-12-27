@@ -83,7 +83,7 @@ BUILD_NOW()
 		# move the compiled Image.gz-dtb and modules into the READY-KERNEL working directory
 		echo "Move compiled objects........"
 
-		cp "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb READY-KERNEL/zImage;
+		cp "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb READY-KERNEL/Image.gz-dtb;
 
 		for i in $(find "$KERNELDIR" -name '*.ko'); do
 			cp -av "$i" READY-KERNEL/modules/;
@@ -105,7 +105,7 @@ BUILD_NOW()
 		zip -r Kernel-OP5-"$(date +"[%y-%m-%d]-[%H-%M]-O-PWR-CORE")".zip * -x@exclude.list >/dev/null
 		cd $KERNELDIR;
 		echo "Cleaning";
-		rm "$KERNELDIR"/READY-KERNEL/zImage;
+		rm "$KERNELDIR"/READY-KERNEL/Image.gz-dtb;
 		rm "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb;
 		rm "$KERNELDIR"/READY-KERNEL/modules/*.ko;
 		rm "$KERNELDIR"/READY-KERNEL/config/.config
