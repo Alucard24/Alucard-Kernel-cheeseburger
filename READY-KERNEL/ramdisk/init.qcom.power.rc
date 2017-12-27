@@ -173,5 +173,4 @@ on enable-low-power
 
 on property:sys.boot_completed=1
 	trigger enable-low-power
-	exec u:r:su:s0 root root -- /init.supolicy.sh
-	exec u:r:supersu:s0 root root -- /init.supolicy.sh
+
