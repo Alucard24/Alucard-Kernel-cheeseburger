@@ -111,9 +111,9 @@ on boot
 
 on enable-low-power
 	# Enable Adaptive LMK
-	write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 1
-	write /sys/module/lowmemorykiller/parameters/minfree "18432,23040,27648,51256,150296,200640"
-	write /sys/module/lowmemorykiller/parameters/vmpressure_file_min 162500
+	# write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 1
+	# write /sys/module/lowmemorykiller/parameters/minfree "18432,23040,27648,51256,150296,200640"
+	# write /sys/module/lowmemorykiller/parameters/vmpressure_file_min 162500
 
 	# Start IOP
 	start iop
@@ -136,6 +136,9 @@ on enable-low-power
 
 	# Enable thermal bcl hotplug to switch governor
 	write /sys/module/msm_thermal/core_control/enabled 1
+
+	# Enable input boost configuration
+	# write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:1056000"
 
 	# Enable UFS powersaving
 	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
@@ -171,5 +174,3 @@ on enable-low-power
 on property:sys.boot_completed=1
 	trigger enable-low-power
 
-	exec u:r:su:s0 root root -- /init.supolicy.sh
-	exec u:r:supersu:s0 root root -- /init.supolicy.sh
