@@ -56,8 +56,6 @@
 
 #include "sched/tune.h"
 
-#include "sched/tune.h"
-
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 #include <asm/pgtable.h>
