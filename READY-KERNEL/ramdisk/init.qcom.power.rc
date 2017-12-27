@@ -1,0 +1,177 @@
+on init
+	# Disable UFS powersaving
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 0
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkgate_enable 0
+	write /sys/devices/soc/${ro.boot.bootdevice}/hibern8_on_idle_enable 0
+	write /sys/module/lpm_levels/parameters/sleep_disabled Y
+    
+	# set default schedTune value for foreground/top-app (only affects EAS)
+	write /dev/stune/foreground/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.boost 10
+
+	# Setup cpusets used by the VR services.
+	mkdir /dev/cpuset/kernel 0750 root system
+	write /dev/cpuset/kernel/cpus 0
+	write /dev/cpuset/kernel/mems 0
+	chown system system /dev/cpuset/kernel/tasks
+	chmod 0660 /dev/cpuset/kernel/tasks
+
+	mkdir /dev/cpuset/system 0750 root system
+	write /dev/cpuset/system/cpus 0
+	write /dev/cpuset/system/mems 0
+	chown system system /dev/cpuset/system/tasks
+	chmod 0660 /dev/cpuset/system/tasks
+
+	mkdir /dev/cpuset/system/performance 0750 root system
+	write /dev/cpuset/system/performance/cpus 0
+	write /dev/cpuset/system/performance/mems 0
+	chown system system /dev/cpuset/system/performance/tasks
+	chmod 0660 /dev/cpuset/system/performance/tasks
+
+	mkdir /dev/cpuset/system/background 0750 root system
+	write /dev/cpuset/system/background/cpus 0
+	write /dev/cpuset/system/background/mems 0
+	chown system system /dev/cpuset/system/background/tasks
+	chmod 0660 /dev/cpuset/system/background/tasks
+
+	mkdir /dev/cpuset/application 0750 root system
+	write /dev/cpuset/application/cpus 0
+	write /dev/cpuset/application/mems 0
+	chown system system /dev/cpuset/application/tasks
+	chmod 0660 /dev/cpuset/application/tasks
+
+	mkdir /dev/cpuset/application/performance 0750 root system
+	write /dev/cpuset/application/performance/cpus 0
+	write /dev/cpuset/application/performance/mems 0
+	chown system system /dev/cpuset/application/performance/tasks
+	chmod 0660 /dev/cpuset/application/performance/tasks
+
+	mkdir /dev/cpuset/application/background 0750 root system
+	write /dev/cpuset/application/background/cpus 0
+	write /dev/cpuset/application/background/mems 0
+	chown system system /dev/cpuset/application/background/tasks
+	chmod 0660 /dev/cpuset/application/background/tasks
+
+	# Disable retention
+	write /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled N
+	write /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled N
+	write /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled N
+	write /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled N
+
+	# b/37682684 Enable suspend clock reporting
+	write /sys/kernel/debug/clk/debug_suspend 1
+
+on late-fs
+	# boot time fs tune
+	write /sys/block/sda/queue/iostats 0
+	write /sys/block/sda/queue/scheduler cfq
+	write /sys/block/sda/queue/iosched/slice_idle 0
+	write /sys/block/sda/queue/read_ahead_kb 2048
+	write /sys/block/sda/queue/nr_requests 256
+	write /sys/block/sde/queue/iostats 0
+	write /sys/block/sde/queue/scheduler cfq
+	write /sys/block/sde/queue/iosched/slice_idle 0
+	write /sys/block/sde/queue/read_ahead_kb 2048
+	write /sys/block/sde/queue/nr_requests 256
+	write /sys/block/dm-0/queue/read_ahead_kb 2048
+	write /sys/block/dm-1/queue/read_ahead_kb 2048
+
+on boot
+	# update cpusets now that processors are up
+	write /dev/cpuset/top-app/cpus 0-7
+	write /dev/cpuset/foreground/cpus 0-7
+	write /dev/cpuset/foreground/boost/cpus 0-7
+	write /dev/cpuset/background/cpus 0-7
+	write /dev/cpuset/system-background/cpus 0-7
+
+	# Update DVR cpusets to boot-time values.
+	write /dev/cpuset/kernel/cpus 0-7
+	write /dev/cpuset/system/cpus 0-7
+	write /dev/cpuset/system/performance/cpus 0-7
+	write /dev/cpuset/system/background/cpus 0-7
+	write /dev/cpuset/system/cpus 0-7
+	write /dev/cpuset/application/cpus 0-7
+	write /dev/cpuset/application/performance/cpus 0-7
+	write /dev/cpuset/application/background/cpus 0-7
+	write /dev/cpuset/application/cpus 0-7
+
+	# set default schedTune value for foreground/top-app (only affects EAS)
+	write /dev/stune/foreground/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.prefer_idle 1
+	write /dev/stune/top-app/schedtune.boost 1
+
+on enable-low-power
+	# Enable Adaptive LMK
+	# write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 1
+	# write /sys/module/lowmemorykiller/parameters/minfree "18432,23040,27648,51256,150296,200640"
+	# write /sys/module/lowmemorykiller/parameters/vmpressure_file_min 162500
+
+	# Start IOP
+	start iop
+
+	# Disable thermal bcl hotplug to switch governor
+	write /sys/module/msm_thermal/core_control/enabled 0
+
+	# Online CPU4
+	write /sys/devices/system/cpu/cpu4/online 1
+
+	# configure governor settings for little cluster
+	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "schedutil"
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
+
+	# configure governor settings for big cluster
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "schedutil"
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
+	write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
+
+	# Enable thermal bcl hotplug to switch governor
+	write /sys/module/msm_thermal/core_control/enabled 1
+
+	# Enable input boost configuration
+	# write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:1056000"
+
+	# Enable UFS powersaving
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
+	write /sys/devices/soc/${ro.boot.bootdevice}/clkgate_enable 1
+	write /sys/devices/soc/${ro.boot.bootdevice}/hibern8_on_idle_enable 1
+	write /sys/module/lpm_levels/parameters/sleep_disabled N
+
+	# update cpusets now that boot is complete and we want better load balancing
+	write /dev/cpuset/top-app/cpus 0-7
+	write /dev/cpuset/foreground/cpus 0-3,6-7
+	write /dev/cpuset/background/cpus 0-1
+	write /dev/cpuset/system-background/cpus 0-3
+
+	# Update DVR cpusets to runtime values.
+	write /dev/cpuset/kernel/cpus 2,3
+	write /dev/cpuset/system/performance/cpus 6-7
+	write /dev/cpuset/system/background/cpus 0-1
+	write /dev/cpuset/system/cpus 0-1,6-7
+	write /dev/cpuset/application/performance/cpus 4-5
+	write /dev/cpuset/application/background/cpus 0-1
+	write /dev/cpuset/application/cpus 0-1,4-5
+
+	# end boot time fs tune
+	write /sys/block/sda/queue/read_ahead_kb 1024
+	write /sys/block/sda/queue/nr_requests 128
+	write /sys/block/sda/queue/iostats 1
+	write /sys/block/sde/queue/read_ahead_kb 512
+	write /sys/block/sde/queue/nr_requests 128
+	write /sys/block/sde/queue/iostats 1
+	write /sys/block/dm-0/queue/read_ahead_kb 512
+	write /sys/block/dm-1/queue/read_ahead_kb 512    
+
+on property:sys.boot_completed=1
+	trigger enable-low-power
+	exec u:r:su:s0 root root -- /init.supolicy.sh
+	exec u:r:supersu:s0 root root -- /init.supolicy.sh
