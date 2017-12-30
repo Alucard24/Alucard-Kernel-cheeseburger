@@ -112,9 +112,3 @@ all.config
 
 # Kdevelop4
 *.kdev4
-<<<<<<< HEAD
-=======
-
-drivers/platform/msm/ipa/ipa_common
-net/wireguard/
->>>>>>> 5a5139e... net/wireguard: add to tree via updater mechanism
