@@ -39,7 +39,7 @@ dump_boot;
 
 # init.rc
 backup_file init.rc
-insert_line init.rc "init.qcom.power.rc" after "import init.qcom.usb.rc" "import /init.qcom.power.rc\n";
+insert_line init.rc "init.qcom.power.rc" after "import init.environ.rc" "import /init.qcom.power.rc\n";
 
 backup_file init.oem_ftm.rc
 remove_section init.oem_ftm.rc "service ftm_power_config" "oneshot"
