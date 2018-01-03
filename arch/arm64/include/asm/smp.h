@@ -16,20 +16,11 @@
 #ifndef __ASM_SMP_H
 #define __ASM_SMP_H
 
-#include <asm/percpu.h>
-
 #include <linux/threads.h>
 #include <linux/cpumask.h>
 #include <linux/thread_info.h>
 
-DECLARE_PER_CPU_READ_MOSTLY(int, cpu_number);
-
-/*
- * We don't use this_cpu_read(cpu_number) as that has implicit writes to
- * preempt_count, and associated (compiler) barriers, that we'd like to avoid
- * the expense of. If we're preemptible, the value can be stale at use anyway.
- */
-#define raw_smp_processor_id() (*this_cpu_ptr(&cpu_number))
+#define raw_smp_processor_id() (current_thread_info()->cpu)
 
 struct seq_file;
 
