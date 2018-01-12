@@ -25,8 +25,8 @@ else
 fi;
 
 cp -pv .config .config.bkp;
-make ARCH=arm mrproper;
-make clean;
+make ARCH=arm64 mrproper;
+make ARCH=arm64 clean;
 cp -pv .config.bkp .config;
 
 if [ "$PYTHON_WAS_3" -eq "1" ]; then
