@@ -32,9 +32,10 @@ chmod -R 750 $ramdisk/*;
 chmod 644 $ramdisk/modules/*;
 chown -R root:root $ramdisk/*;
 
+# Mount system to get Android version and remove unneeded modules
+mount -o rw,remount -t auto /system;
 
-## AnyKernel install
-# alert of unsupported Android version
+# Alert of unsupported Android version
 android_ver=$(grep "^ro.build.version.release" /system/build.prop | cut -d= -f2);
 case "$android_ver" in
   "8.0.0"|"8.1.0") support_status="supported";;
@@ -44,6 +45,15 @@ ui_print " ";
 ui_print "Running Android $android_ver..."
 ui_print "This kernel is $support_status for this version!";
 
+# Unmount system
+mount -o ro,remount -t auto /system;
+
+if [ -f /tmp/anykernel/version ]; then
+  ui_print " ";
+  ui_print "Kernel version: $(cat /tmp/anykernel/version)";
+fi;
+
+## AnyKernel install
 dump_boot;
 
 # begin ramdisk changes
@@ -52,16 +62,18 @@ dump_boot;
 insert_line init.rc "init.qcom.power.rc" after "import /init.usb.rc" "import /init.qcom.power.rc";
 
 # sepolicy
-$bin/sepolicy-inject -s modprobe -t rootfs -c system -p module_load -P sepolicy;
-$bin/sepolicy-inject -s init -t vendor_file -c file -p mounton -P sepolicy;
-$bin/sepolicy-inject -s init -t system_file -c file -p mounton -P sepolicy;
 $bin/sepolicy-inject -s init -t rootfs -c file -p execute_no_trans -P sepolicy;
+$bin/sepolicy-inject -s init -t rootfs -c system -p module_load -P sepolicy;
+$bin/sepolicy-inject -s init -t system_file -c file -p mounton -P sepolicy;
+$bin/sepolicy-inject -s init -t vendor_file -c file -p mounton -P sepolicy;
+$bin/sepolicy-inject -s modprobe -t rootfs -c system -p module_load -P sepolicy;
 
 # sepolicy_debug
-$bin/sepolicy-inject -s modprobe -t rootfs -c system -p module_load -P sepolicy;
-$bin/sepolicy-inject -s init -t vendor_file -c file -p mounton -P sepolicy_debug;
-$bin/sepolicy-inject -s init -t system_file -c file -p mounton -P sepolicy_debug;
 $bin/sepolicy-inject -s init -t rootfs -c file -p execute_no_trans -P sepolicy_debug;
+$bin/sepolicy-inject -s init -t rootfs -c system -p module_load -P sepolicy_debug;
+$bin/sepolicy-inject -s init -t system_file -c file -p mounton -P sepolicy_debug;
+$bin/sepolicy-inject -s init -t vendor_file -c file -p mounton -P sepolicy_debug;
+$bin/sepolicy-inject -s modprobe -t rootfs -c system -p module_load -P sepolicy_debug;
 
 # end ramdisk changes
 
