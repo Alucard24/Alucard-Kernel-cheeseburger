@@ -84,12 +84,6 @@ on late-fs
     write /sys/block/sde/queue/nr_requests 256 
 
 on boot
-    # bind mount custom wifi module
-    rmmod wlan.ko
-    mount auto /modules/wlan.ko /system/lib/modules/wlan.ko bind
-    mount auto /modules/wlan.ko /vendor/lib/modules/wlan.ko bind
-    exec u:r:modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules wlan
-
 	# update cpusets now that processors are up
 	write /dev/cpuset/top-app/cpus 0-7
 	write /dev/cpuset/foreground/cpus 0-7
