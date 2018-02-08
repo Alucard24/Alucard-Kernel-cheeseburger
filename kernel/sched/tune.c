@@ -20,12 +20,6 @@ unsigned int sysctl_sched_cfs_boost __read_mostly;
 extern struct reciprocal_value schedtune_spc_rdiv;
 extern struct target_nrg schedtune_target_nrg;
 
-#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-unsigned int top_app_idx = 0;
-int default_topapp_boost = 0;
-struct cgroup_subsys_state *topapp_css;
-#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
-
 /* Performance Boost region (B) threshold params */
 static int perf_boost_idx;
 
@@ -244,6 +238,15 @@ struct boost_groups {
 
 /* Boost groups affecting each CPU in the system */
 DEFINE_PER_CPU(struct boost_groups, cpu_boost_groups);
+
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+struct dynamic_stune {
+	struct cgroup_subsys_state *app_css;
+	int default_app_boost;
+};
+static struct dynamic_stune dynamic_stune_group[BOOSTGROUPS_COUNT];
+static int cur_app_idx = 0;
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 static void
 schedtune_cpu_update(int cpu)
@@ -594,8 +597,8 @@ boost_read(struct cgroup_subsys_state *css, struct cftype *cft)
 }
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
-int
-dynamic_boost_write(struct cgroup_subsys_state *css, int boost)
+static int
+_dynamic_boost_write(struct cgroup_subsys_state *css, int boost)
 {
 	struct schedtune *st = css_st(css);
 	unsigned threshold_idx;
@@ -629,6 +632,44 @@ dynamic_boost_write(struct cgroup_subsys_state *css, int boost)
 
 	return 0;
 }
+
+int
+dynamic_boost_write(int idx, int boost, bool defaultboost)
+{
+	struct cgroup_subsys_state *css;
+
+	if (idx >= BOOSTGROUPS_COUNT
+		|| idx < 0) {
+		pr_err("dynamic stune boost index more than %d SchedTune boosting groups\n",
+		       BOOSTGROUPS_COUNT);
+		return -1;
+	}
+	if (idx != cur_app_idx) {
+		/* Restore default boost for current boost group */
+		css = dynamic_stune_group[cur_app_idx].app_css;
+		if (!css) {
+			pr_err("dynamic stune boost group[%d] not allocated!\n",
+				cur_app_idx);
+		} else {
+			_dynamic_boost_write(css, 
+				dynamic_stune_group[cur_app_idx].default_app_boost);
+		}
+		cur_app_idx = idx;
+	}
+	css = dynamic_stune_group[idx].app_css;
+	if (!css) {
+		pr_err("dynamic stune boost group[%d] not allocated!\n",
+				idx);
+		return -1;
+	}
+	if (defaultboost)
+		boost = dynamic_stune_group[idx].default_app_boost;
+
+	if (boost < dynamic_stune_group[idx].default_app_boost)
+		return 0;
+
+	return _dynamic_boost_write(css, boost);
+}
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 static int
@@ -661,9 +702,8 @@ boost_write(struct cgroup_subsys_state *css, struct cftype *cft,
 	}
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
-        // Remember default top-app boost value
-        if (st->idx == top_app_idx)
-                default_topapp_boost = boost;
+	/* Remember default app boost value */
+	dynamic_stune_group[st->idx].default_app_boost = boost;
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 	/* Update CPU boost */
@@ -706,17 +746,14 @@ schedtune_boostgroup_init(struct schedtune *st)
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
     /* 
-     * Assume confidently that the index of top-app is the last assigned index.
-     * This observation is likely due to SchedTune cgroups being initialized in alphabetical order.
-     * E.g. background, foreground, system-background, top-app (last)
+     * Assume confidently that the index of top-app should be the last assigned index.
+     * This observation is likely due to SchedTune cgroups should be initialized in alphabetical order.
+     * E.g. audio, background, foreground, system-background, top-app (last)
      */
-	if (st->idx > top_app_idx) {
-		top_app_idx = st->idx;
-                topapp_css = &st->css;
-                default_topapp_boost = st->boost;
-        }
-
-	pr_info("STUNE INIT: top app idx: %d\n", top_app_idx);
+	cur_app_idx = st->idx;
+	dynamic_stune_group[st->idx].app_css = &st->css;
+	dynamic_stune_group[st->idx].default_app_boost = st->boost;
+	pr_info("STUNE INIT: cur app idx: %d\n", cur_app_idx);
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 	return 0;
@@ -772,6 +809,12 @@ schedtune_boostgroup_release(struct schedtune *st)
 
 	/* Keep track of allocated boost groups */
 	allocated_group[st->idx] = NULL;
+
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Keep track of dynamic stune allocated boost groups */
+	dynamic_stune_group[st->idx].app_css = NULL;
+	dynamic_stune_group[st->idx].default_app_boost = 0;
+#endif
 }
 
 static void
