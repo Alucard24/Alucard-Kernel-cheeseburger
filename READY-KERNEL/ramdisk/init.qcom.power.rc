@@ -139,7 +139,7 @@ on enable-low-power
 
 	# Enable input boost configuration
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:0 4:0"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 1000
+	write /sys/module/cpu_boost/parameters/input_boost_ms 460
 
 	# Enable UFS powersaving
 	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
@@ -163,8 +163,11 @@ on enable-low-power
 	write /dev/cpuset/application/background/cpus 0-1
 	write /dev/cpuset/application/cpus 0-1,4-5
 
-	# Enable Dynamic Stune Boost
-	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 5
+	# OOS 5.0.2 Select Top-app boost group as default
+	write /sys/module/cpu_boost/parameters/dynamic_stune_group_idx 3
+
+	# Set default value for Dynamic Stune Boost
+	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 10
 
     # end boot time fs tune
     write /sys/block/sda/queue/read_ahead_kb 1024
