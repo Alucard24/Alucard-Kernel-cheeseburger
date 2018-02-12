@@ -139,7 +139,8 @@ on enable-low-power
 
 	# Enable input boost configuration
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:0 4:0"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 400
+	write /sys/module/cpu_boost/parameters/input_boost_ms 150
+	write /sys/module/cpu_boost/parameters/input_boost_off_ms 300
 
 	# Enable UFS powersaving
 	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
