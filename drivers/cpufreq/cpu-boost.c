@@ -40,6 +40,9 @@ module_param(input_boost_enabled, uint, 0644);
 static unsigned int input_boost_ms = 40;
 module_param(input_boost_ms, uint, 0644);
 
+static unsigned int input_boost_off_ms = 40;
+module_param(input_boost_off_ms, uint, 0644);
+
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static int dynamic_stune_boost;
 module_param(dynamic_stune_boost, uint, 0644);
@@ -242,7 +245,7 @@ static void cpuboost_input_event(struct input_handle *handle,
 		return;
 
 	now = ktime_to_us(ktime_get());
-	if (now - last_input_time < MIN_INPUT_INTERVAL)
+	if ((now - last_input_time) < (input_boost_off_ms * USEC_PER_MSEC))
 		return;
 
 	if (queuing_blocked(&cpu_boost_worker, &input_boost_work))
