@@ -20,8 +20,11 @@ echo "Initialising................."
 if [ -e "$KERNELDIR"/READY-KERNEL/Image.gz-dtb ]; then
 	rm "$KERNELDIR"/READY-KERNEL/Image.gz-dtb;
 fi;
-if [ -e "$KERNELDIR"/READY-KERNEL/ramdisk/modules/wlan.ko ]; then
-	rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/*.ko;
+if [ -e "$KERNELDIR"/READY-KERNEL/modules/system/lib/modules/wlan.ko ]; then
+	rm "$KERNELDIR"/READY-KERNEL/modules/system/lib/modules/*.ko;
+fi;
+if [ -e "$KERNELDIR"/READY-KERNEL/modules/system/vendor/lib/modules/qca_cld3_wlan.ko ]; then
+	rm "$KERNELDIR"/READY-KERNEL/modules/system/vendor/lib/modules/*.ko;
 fi;
 if [ -e "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb ]; then
 	rm "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb;
@@ -86,10 +89,16 @@ BUILD_NOW()
 		cp "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb READY-KERNEL/Image.gz-dtb;
 
 		for i in $(find "$KERNELDIR" -name '*.ko'); do
-			cp -av "$i" READY-KERNEL/ramdisk/modules;
+			cp -av "$i" READY-KERNEL/modules/system/lib/modules;
+			cp -av "$i" READY-KERNEL/modules/system/vendor/lib/modules;
 		done;
 
-		chmod 755 READY-KERNEL/ramdisk/modules/*.ko
+		chmod 755 READY-KERNEL/modules/system/lib/modules/*.ko
+		chmod 755 READY-KERNEL/modules/system/vendor/lib/modules/*.ko
+
+		if [ -e "$KERNELDIR"/READY-KERNEL/modules/system/vendor/lib/modules/wlan.ko ]; then
+			mv -v READY-KERNEL/modules/system/vendor/lib/modules/wlan.ko READY-KERNEL/modules/system/vendor/lib/modules/qca_cld3_wlan.ko;
+		fi;
 
 		if [ "$PYTHON_WAS_3" -eq "1" ]; then
 			rm /usr/bin/python
@@ -107,7 +116,7 @@ BUILD_NOW()
 		echo "Cleaning";
 		rm "$KERNELDIR"/READY-KERNEL/Image.gz-dtb;
 		rm "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb;
-		rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/*.ko;
+		rm "$KERNELDIR"/READY-KERNEL/modules/system/lib/modules/*.ko;
 		rm "$KERNELDIR"/READY-KERNEL/config/.config
 		echo "All Done";
 	else

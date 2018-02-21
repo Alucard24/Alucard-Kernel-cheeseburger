@@ -14,13 +14,7 @@ ui_print() {
 }
 show_progress() { echo "progress $1 $2" > $OUTFD; }
 file_getprop() { grep "^$2=" "$1" | cut -d= -f2; }
-if [ ! "$(getprop 2>/dev/null)" ]; then
-  getprop() {
-    local propval="$(file_getprop /default.prop $1 2>/dev/null)";
-    test "$propval" || local propval="$(file_getprop /system/build.prop $1 2>/dev/null)";
-    test "$propval" && echo "$propval" || echo "";
-  }
-fi;
+getprop() { test -e /sbin/getprop && /sbin/getprop $1 || file_getprop /default.prop $1; }
 cleanup() { rm -rf /tmp/anykernel; }
 debugging() {
   case $(basename "$ZIPFILE" .zip) in
@@ -105,22 +99,31 @@ if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.modules)" == 1 ]; then
   mount -o rw,remount -t auto /vendor 2>/dev/null;
   cd /tmp/anykernel/modules;
   for module in $(find . -name '*.ko'); do
-    if [ ! -e /$module ]; then
-      case $module in
-        */vendor/*) mod=vendor;;
-        *) mod=system;;
-      esac;
-    fi;
     $bb cp -rLf $module /$module;
     $bb chown 0:0 /$module;
     $bb chmod 644 /$module;
-    if [ "$mod" ]; then
-      chcon "u:object_r:${mod}_file:s0" /$module;
-    fi;
+    case $module in
+      */vendor/*) mod=vendor;;
+      *) mod=system;;
+    esac;
+    chcon "u:object_r:${mod}_file:s0" /$module;
   done;
   cd /tmp/anykernel;
   mount -o ro,remount -t auto /system;
   mount -o ro,remount -t auto /vendor 2>/dev/null;
+fi;
+
+if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.system_blobs)" == 1 ]; then
+  ui_print " ";
+  ui_print "Pushing System Blobs...";
+  mount -o remount,rw -t auto /system;
+  cp -rf /tmp/anykernel/system/vendor/etc/msm_irqbalance.conf /system/vendor/etc/msm_irqbalance.conf;
+  cp -rf /tmp/anykernel/system/vendor/etc/perf/perfboostsconfig.xml /system/vendor/etc/perf/perfboostsconfig.xml;
+  cp -rf /tmp/anykernel/system/vendor/etc/wifi/WCNSS_qcom_cfg.ini /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini;
+  set_perm 0 0 0644 /system/vendor/etc/msm_irqbalance.conf;
+  set_perm 0 0 0644 /system/vendor/etc/perf/perfboostsconfig.xml;
+  set_perm 0 0 0644 /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini;
+  mount -o remount,ro -t auto /system;
 fi;
 
 debugging;
