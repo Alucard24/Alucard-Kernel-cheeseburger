@@ -70,11 +70,6 @@ on init
 	# b/37682684 Enable suspend clock reporting
 	write /sys/kernel/debug/clk/debug_suspend 1
 
-on late-init
-    # bind eas system files
-    mount auto /msm_irqbalance.conf /vendor/etc/msm_irqbalance.conf bind
-    mount auto /perfboostsconfig.xml /vendor/etc/perf/perfboostsconfig.xml bind
-
 on late-fs
     # boot time fs tune
     write /sys/block/sda/queue/iostats 0
@@ -107,6 +102,9 @@ on boot
 	write /dev/cpuset/application/background/cpus 0-7
 	write /dev/cpuset/application/cpus 0-7
 
+    # bind eas system files
+    mount auto /msm_irqbalance.conf /vendor/etc/msm_irqbalance.conf bind
+    mount auto /perfboostsconfig.xml /vendor/etc/perf/msm_irqbalance.conf bind
     # bind mount wifi config file
     mount auto /WCNSS_qcom_cfg.ini /vendor/etc/wifi/WCNSS_qcom_cfg.ini bind
     # bind mount custom wifi module
