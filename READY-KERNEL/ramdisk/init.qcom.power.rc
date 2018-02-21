@@ -113,7 +113,7 @@ on enable-low-power
     setprop dalvik.vm.heapminfree 2m
 
 	# Start IOP
-	start iop
+	#start iop
 
 	# Disable thermal bcl hotplug to switch governor
 	write /sys/module/msm_thermal/core_control/enabled 0
