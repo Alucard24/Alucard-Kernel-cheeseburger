@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *     * Neither the name of The Linux Foundation nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+-->
+<HintConfigs>
+    <Powerhint>
+        <!--video encode 30 fps-->
+        <!-- B CPU - Cluster max freq ~1.958 Ghz -->
+        <Config
+            Id="0x00001203" Enable="true" Target="msm8998"
+            Resources="0x40804000, 0x7A6" />
+
+        <!--sustained performance-->
+        <!-- B CPU - Cluster min freq uncapped -->
+        <!-- L CPU - Cluster min freq uncapped -->
+        <!-- B CPU - Cluster max freq ~1.2 GHz -->
+        <!-- L CPU - Cluster max freq ~1.2 Ghz -->
+        <!-- GPU - min freq 180 Mhz -->
+        <!-- GPU - max freq 342 Mhz -->
+        <!-- GPUBW freq uncapped -->
+        <Config
+            Id="0x00001206" Enable="true" Target="msm8998"
+            Resources="0x40800000, 0x0, 0x40800100, 0x0, 0x40804000, 0x4E0, 0x40804100, 0x4E0,
+            0x4280C000, 0xB4, 0x42810000, 0x156, 0x42814000, 0x0"/>
+        <!--vr mode-->
+        <!-- B CPU - Cluster min freq ~1.4 Ghz -->
+        <!-- L CPU - Cluster min freq ~1.4 Ghz -->
+        <!-- B CPU - Cluster max freq ~1.4 Ghz -->
+        <!-- L CPU - Cluster max freq ~1.4 Ghz -->
+        <!-- GPU - min freq 515 Mhz -->
+        <!-- GPU - max freq 515 Mhz -->
+        <!-- GPUBW freq 1555 Mhz-->
+        <Config
+            Id="0x00001207" Enable="true" Target="msm8998"
+            Resources="0x40800000, 0x626, 0x40800100, 0x613, 0x40804000, 0x626, 0x40804100, 0x613,
+            0x4280C000, 0x203, 0x42810000, 0x203, 0x42814000, 0x2E57"/>
+
+        <!--vr mode sustained performance-->
+        <!-- B CPU - Cluster min freq ~1.5 Ghz -->
+        <!-- L CPU - Cluster min freq ~1.3 Ghz -->
+        <!-- B CPU - Cluster max freq ~1.5 Ghz -->
+        <!-- L CPU - Cluster max freq ~1.3 Ghz -->
+        <!-- GPU - min freq 414 Mhz -->
+        <!-- GPU - max freq 414 Mhz -->
+        <!-- GPUBW freq 1017 Mhz -->
+        <Config
+            Id="0x00001301" Enable="true" Target="msm8998"
+            Resources="0x40800000, 0x540, 0x40800100, 0x5c6, 0x40804000, 0x540, 0x40804100, 0x5c6, 0x4280C000, 0x19E,
+            0x42810000, 0x19E, 0x42814000, 0x1E4F"/>
+    </Powerhint>
+</HintConfigs>
+
