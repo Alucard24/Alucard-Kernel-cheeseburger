@@ -3794,7 +3794,6 @@ int ufshcd_read_device_desc(struct ufs_hba *hba, u8 *buf, u32 size)
 	return ufshcd_read_desc(hba, QUERY_DESC_IDN_DEVICE, 0, buf, size);
 }
 
-/* liochen@BSP 2016/11/30, Add ufs info into *##*37847# */
 int ufshcd_read_geometry_desc(struct ufs_hba *hba, u8 *buf, u32 size)
 {
        return ufshcd_read_desc(hba, QUERY_DESC_IDN_GEOMETRY, 0, buf, size);
@@ -4714,6 +4713,7 @@ int ufshcd_change_power_mode(struct ufs_hba *hba,
 
 		memcpy(&hba->pwr_info, pwr_mode,
 			sizeof(struct ufs_pa_layer_attr));
+		hba->ufs_stats.power_mode_change_cnt++;
 	}
 
 	return ret;
@@ -7389,9 +7389,6 @@ static void ufshcd_clear_dbg_ufs_stats(struct ufs_hba *hba)
 {
 	int err_reg_hist_size = sizeof(struct ufs_uic_err_reg_hist);
 
-	hba->ufs_stats.hibern8_exit_cnt = 0;
-	hba->ufs_stats.last_hibern8_exit_tstamp = ktime_set(0, 0);
-
 	memset(&hba->ufs_stats.pa_err, 0, err_reg_hist_size);
 	memset(&hba->ufs_stats.dl_err, 0, err_reg_hist_size);
 	memset(&hba->ufs_stats.nl_err, 0, err_reg_hist_size);
@@ -7528,7 +7525,6 @@ static int ufshcd_probe_hba(struct ufs_hba *hba)
 		}
 
 
-		/* liochen@BSP, 2016/11/30, Add ufs info into *##*37847# */
 		ufs_fill_info(hba);
 
 		scsi_scan_host(hba->host);

@@ -2483,7 +2483,8 @@ static int icnss_modem_notifier_nb(struct notifier_block *nb,
 
 	icnss_pr_vdbg("Modem-Notify: event %lu\n", code);
 
-	if (code == SUBSYS_AFTER_SHUTDOWN) {
+	if (code == SUBSYS_AFTER_SHUTDOWN &&
+	    notif->crashed == CRASH_STATUS_ERR_FATAL) {
 		ret = icnss_assign_msa_perm_all(priv,
 						ICNSS_MSA_PERM_DUMP_COLLECT);
 		if (!ret) {
@@ -4337,7 +4338,6 @@ static ssize_t cnss_version_information_show(struct device *dev,
 
 static DEVICE_ATTR(cnss_version_information, 0444,
                 cnss_version_information_show, NULL);
-//#endif /* VENDOR_EDIT */
 
 static int icnss_probe(struct platform_device *pdev)
 {
