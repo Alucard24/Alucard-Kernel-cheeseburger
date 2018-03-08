@@ -1527,7 +1527,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
     if (ctrl->iris_enabled){
         iris_init(ctrl);
         iris_panel_cmds(ctrl, &ctrl->on_cmds);
-	}else
+	} else
 	if (on_cmds->cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, on_cmds, CMD_REQ_COMMIT);
     mutex_lock(&ctrl->panel_mode_lock);
