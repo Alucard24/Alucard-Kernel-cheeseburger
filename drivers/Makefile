@@ -184,5 +184,8 @@ obj-$(CONFIG_BIF)		+= bif/
 obj-$(CONFIG_SENSORS_SSC)	+= sensors/
 obj-$(CONFIG_ESOC)              += esoc/
 
+#porting for support oem trace
+obj-y  += oneplus/
+
 # liochen@BSP, 2017/09/10, support param partion read/write
 obj-y  += param_read_write/
