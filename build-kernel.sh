@@ -90,15 +90,19 @@ BUILD_NOW()
 
 		for i in $(find "$KERNELDIR" -name '*.ko'); do
 			cp -av "$i" READY-KERNEL/modules/system/lib/modules;
-			cp -av "$i" READY-KERNEL/modules/system/vendor/lib/modules;
+			if [ $(echo "$i" | grep -c "wlan.ko") -gt 0 ]; then
+				cp -av "$i" READY-KERNEL/modules/system/vendor/lib/modules/qca_cld3_wlan.ko;
+			fi;
+			if [ $(echo "$i" | grep -c "msm_11ad_proxy.ko") -gt 0 ]; then
+				cp -av "$i" READY-KERNEL/modules/system/vendor/lib/modules;
+			fi;
+			if [ $(echo "$i" | grep -c "wil6210.ko") -gt 0 ]; then
+				cp -av "$i" READY-KERNEL/modules/system/vendor/lib/modules;
+			fi;
 		done;
 
 		chmod 755 READY-KERNEL/modules/system/lib/modules/*.ko
 		chmod 755 READY-KERNEL/modules/system/vendor/lib/modules/*.ko
-
-		if [ -e "$KERNELDIR"/READY-KERNEL/modules/system/vendor/lib/modules/wlan.ko ]; then
-			mv -v READY-KERNEL/modules/system/vendor/lib/modules/wlan.ko READY-KERNEL/modules/system/vendor/lib/modules/qca_cld3_wlan.ko;
-		fi;
 
 		if [ "$PYTHON_WAS_3" -eq "1" ]; then
 			rm /usr/bin/python
@@ -117,6 +121,7 @@ BUILD_NOW()
 		rm "$KERNELDIR"/READY-KERNEL/Image.gz-dtb;
 		rm "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb;
 		rm "$KERNELDIR"/READY-KERNEL/modules/system/lib/modules/*.ko;
+		rm "$KERNELDIR"/READY-KERNEL/modules/system/vendor/lib/modules/*.ko;
 		rm "$KERNELDIR"/READY-KERNEL/config/.config
 		echo "All Done";
 	else
