@@ -339,7 +339,7 @@ static ext4_fsblk_t ext4_valid_block_bitmap(struct super_block *sb,
 	blk = ext4_block_bitmap(sb, desc);
 	offset = blk - group_first_block;
 	if (offset < 0 || EXT4_B2C(sbi, offset) >= max_bit ||
-	    !ext4_test_bit(EXT4_B2C(sbi, offset), bh->b_data))
+	    !ext4_test_bit(EXT4_B2C(sbi, offset), bh->b_data)) {
 		/* bad block bitmap */
 		pr_err("ext4_valid_block_bitmap: ext4_block_bitmap: bad block bitmap!\n");
 		return blk;
@@ -349,7 +349,7 @@ static ext4_fsblk_t ext4_valid_block_bitmap(struct super_block *sb,
 	blk = ext4_inode_bitmap(sb, desc);
 	offset = blk - group_first_block;
 	if (offset < 0 || EXT4_B2C(sbi, offset) >= max_bit ||
-	    !ext4_test_bit(EXT4_B2C(sbi, offset), bh->b_data))
+	    !ext4_test_bit(EXT4_B2C(sbi, offset), bh->b_data)) {
 		/* bad block bitmap */
 		pr_err("ext4_valid_block_bitmap: ext4_inode_bitmap: bad block bitmap!\n");
 		return blk;
