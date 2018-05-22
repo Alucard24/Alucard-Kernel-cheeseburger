@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.4.121 Kernel Configuration
+# Linux/arm64 4.4.132 Kernel Configuration
 #
 # CONFIG_CUSTOM_ROM is not set
 CONFIG_ARM64=y
@@ -2002,7 +2002,6 @@ CONFIG_UNIX98_PTYS=y
 #
 # Serial drivers
 #
-CONFIG_SERIAL_EARLYCON=y
 # CONFIG_SERIAL_8250 is not set
 
 #
@@ -2015,10 +2014,8 @@ CONFIG_SERIAL_EARLYCON=y
 # CONFIG_SERIAL_MAX310X is not set
 # CONFIG_SERIAL_UARTLITE is not set
 CONFIG_SERIAL_CORE=y
-CONFIG_SERIAL_CORE_CONSOLE=y
 # CONFIG_SERIAL_JSM is not set
-CONFIG_SERIAL_MSM=y
-CONFIG_SERIAL_MSM_CONSOLE=y
+# CONFIG_SERIAL_MSM is not set
 CONFIG_SERIAL_MSM_HS=y
 # CONFIG_SERIAL_SCCNXP is not set
 # CONFIG_SERIAL_SC16IS7XX is not set
