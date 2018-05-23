@@ -6,7 +6,7 @@ split_img=/tmp/anykernel/split_img;
 patch=/tmp/anykernel/patch;
 
 chmod -R 755 $bin;
-mkdir -p $ramdisk $split_img;
+mkdir -p $split_img;
 
 FD=$1;
 OUTFD=/proc/self/fd/$FD;
@@ -17,9 +17,16 @@ ui_print() { echo -e "ui_print $1\nui_print" > $OUTFD; }
 # contains <string> <substring>
 contains() { test "${1#*$2}" != "$1" && return 0 || return 1; }
 
+# file_getprop <file> <property>
+file_getprop() { grep "^$2=" "$1" | cut -d= -f2; }
+
 # reset anykernel directory
 reset_ak() {
-  rm -rf $ramdisk $split_img /tmp/anykernel/rdtmp /tmp/anykernel/boot.img /tmp/anykernel/*-new.*;
+  rm -rf $(dirname /tmp/anykernel/*-files/current)/ramdisk;
+  for i in $ramdisk $split_img /tmp/anykernel/rdtmp /tmp/anykernel/boot.img /tmp/anykernel/*-new*; do
+    cp -af $i $(dirname /tmp/anykernel/*-files/current);
+  done;
+  rm -rf $ramdisk $split_img $patch /tmp/anykernel/rdtmp /tmp/anykernel/boot.img /tmp/anykernel/*-new* /tmp/anykernel/*-files/current;
   . /tmp/anykernel/tools/ak2-core.sh $FD;
 }
 
@@ -33,10 +40,15 @@ split_boot() {
   else
     dd if=$block of=/tmp/anykernel/boot.img;
   fi;
-  if [ "$(strings /tmp/anykernel/boot.img | grep -E 'Green Loader|Green Recovery')" ]; then
+  nooktest=$(strings /tmp/anykernel/boot.img | grep -E 'Red Loader|Green Loader|Green Recovery|eMMC boot.img|eMMC recovery.img|BauwksBoot');
+  if [ "$nooktest" ]; then
+    case $nooktest in
+      *BauwksBoot*) nookoff=262144;;
+      *) nookoff=1048576;;
+    esac;
     mv -f /tmp/anykernel/boot.img /tmp/anykernel/boot-orig.img;
-    dd bs=1048576 count=1 conv=notrunc if=/tmp/anykernel/boot-orig.img of=$split_img/boot.img-master_boot.key;
-    dd bs=1048576 skip=1 conv=notrunc if=/tmp/anykernel/boot-orig.img of=/tmp/anykernel/boot.img;
+    dd bs=$nookoff count=1 conv=notrunc if=/tmp/anykernel/boot-orig.img of=$split_img/boot.img-master_boot.key;
+    dd bs=$nookoff skip=1 conv=notrunc if=/tmp/anykernel/boot-orig.img of=/tmp/anykernel/boot.img;
   fi;
   if [ -f "$bin/unpackelf" -a "$($bin/unpackelf -i /tmp/anykernel/boot.img -h -q 2>/dev/null; echo $?)" == 0 ]; then
     if [ -f "$bin/elftool" ]; then
@@ -102,7 +114,7 @@ unpack_ramdisk() {
   mkdir -p $ramdisk;
   chmod 755 $ramdisk;
   cd $ramdisk;
-  $unpackcmd -dc $split_img/boot.img-ramdisk.cpio.$compext | cpio -i -d;
+  $unpackcmd -dc $split_img/boot.img-ramdisk.cpio.$compext | EXTRACT_UNSAFE_SYMLINKS=1 cpio -i -d;
   if [ $? != 0 -o -z "$(ls $ramdisk)" ]; then
     ui_print " "; ui_print "Unpacking ramdisk failed. Aborting..."; exit 1;
   fi;
@@ -157,6 +169,7 @@ flash_boot() {
   else
     if [ -f *-cmdline ]; then
       cmdline=`cat *-cmdline`;
+      cmd="$split_img/boot.img-cmdline@cmdline";
     fi;
     if [ -f *-board ]; then
       board=`cat *-board`;
@@ -228,7 +241,7 @@ flash_boot() {
     test "$type" == "Multi" && uramdisk=":$rd";
     $bin/mkimage -A $arch -O $os -T $type -C $comp -a $addr -e $ep -n "$name" -d $kernel$uramdisk boot-new.img;
   elif [ -f "$bin/elftool" ]; then
-    $bin/elftool pack -o boot-new.img header=$split_img/boot.img-header $kernel $rd,ramdisk $rpm $split_img/boot.img-cmdline@cmdline;
+    $bin/elftool pack -o boot-new.img header=$split_img/boot.img-header $kernel $rd,ramdisk $rpm $cmd;
   elif [ -f "$bin/rkcrc" ]; then
     $bin/rkcrc -k $rd boot-new.img;
   elif [ -f "$bin/pxa-mkbootimg" ]; then
@@ -238,8 +251,6 @@ flash_boot() {
   fi;
   if [ $? != 0 ]; then
     ui_print " "; ui_print "Repacking image failed. Aborting..."; exit 1;
-  elif [ "$(wc -c < boot-new.img)" -gt "$(wc -c < boot.img)" ]; then
-    ui_print " "; ui_print "New image larger than boot partition. Aborting..."; exit 1;
   fi;
   if [ -f "$bin/futility" -a -d "$bin/chromeos" ]; then
     $bin/futility vbutil_kernel --pack boot-new-signed.img --keyblock $bin/chromeos/kernel.keyblock --signprivate $bin/chromeos/kernel_data_key.vbprivk --version 1 --vmlinuz boot-new.img --bootloader $bin/chromeos/empty --config $bin/chromeos/empty --arch arm --flags 0x1;
@@ -264,9 +275,11 @@ flash_boot() {
     esac;
     savedpath="$LD_LIBRARY_PATH";
     unset LD_LIBRARY_PATH;
-    /system/bin/dalvikvm -Xbootclasspath:/system/framework/core-oj.jar:/system/framework/core-libart.jar:/system/framework/conscrypt.jar:/system/framework/bouncycastle.jar -Xnodex2oat -Xnoimage-dex2oat -cp $bin/BootSignature_Android.jar com.android.verity.BootSignature /$avbtype boot-new.img $pk8 $cert boot-new-signed.img;
-    if [ $? != 0 ]; then
-      ui_print " "; ui_print "Signing image failed. Aborting..."; exit 1;
+    if [ "$(/system/bin/dalvikvm -Xbootclasspath:/system/framework/core-oj.jar:/system/framework/core-libart.jar:/system/framework/conscrypt.jar:/system/framework/bouncycastle.jar -Xnodex2oat -Xnoimage-dex2oat -cp $bin/BootSignature_Android.jar com.android.verity.BootSignature -verify boot.img | grep VALID)" ]; then
+      /system/bin/dalvikvm -Xbootclasspath:/system/framework/core-oj.jar:/system/framework/core-libart.jar:/system/framework/conscrypt.jar:/system/framework/bouncycastle.jar -Xnodex2oat -Xnoimage-dex2oat -cp $bin/BootSignature_Android.jar com.android.verity.BootSignature /$avbtype boot-new.img $pk8 $cert boot-new-signed.img;
+      if [ $? != 0 ]; then
+        ui_print " "; ui_print "Signing image failed. Aborting..."; exit 1;
+      fi;
     fi;
     test "$savedpath" && export LD_LIBRARY_PATH="$savedpath";
     mv -f boot-new-signed.img boot-new.img;
@@ -302,6 +315,8 @@ flash_boot() {
   fi;
   if [ ! -f /tmp/anykernel/boot-new.img ]; then
     ui_print " "; ui_print "Repacked image could not be found. Aborting..."; exit 1;
+  elif [ "$(wc -c < boot-new.img)" -gt "$(wc -c < boot.img)" ]; then
+    ui_print " "; ui_print "New image larger than boot partition. Aborting..."; exit 1;
   fi;
   if [ -f "$bin/flash_erase" -a -f "$bin/nandwrite" ]; then
     $bin/flash_erase $block 0 0;
@@ -338,6 +353,9 @@ write_boot() {
 # backup_file <file>
 backup_file() { test ! -f $1~ && cp $1 $1~; }
 
+# restore_file <file>
+restore_file() { test -f $1~ && mv -f $1~ $1; }
+
 # replace_string <file> <if search string> <original string> <replacement string>
 replace_string() {
   if [ -z "$(grep "$2" $1)" ]; then
@@ -348,32 +366,38 @@ replace_string() {
 # replace_section <file> <begin search string> <end search string> <replacement string>
 replace_section() {
   begin=`grep -n "$2" $1 | head -n1 | cut -d: -f1`;
-  for end in `grep -n "$3" $1 | cut -d: -f1`; do
-    if [ "$begin" -lt "$end" ]; then
-      if [ "$3" == " " -o -z "$3" ]; then
-        sed -i "/${2//\//\\/}/,/^\s*$/d" $1;
-      else
-        sed -i "/${2//\//\\/}/,/${3//\//\\/}/d" $1;
+  if [ "$begin" ]; then
+    test "$3" == " " -o -z "$3" && endstr='^$' || endstr="$3";
+    for end in `grep -n "$endstr" $1 | cut -d: -f1`; do
+      if [ "$end" ] && [ "$begin" -lt "$end" ]; then
+        if [ "$3" == " " -o -z "$3" ]; then
+          sed -i "/${2//\//\\/}/,/^\s*$/d" $1;
+        else
+          sed -i "/${2//\//\\/}/,/${3//\//\\/}/d" $1;
+        fi;
+        sed -i "${begin}s;^;${4}\n;" $1;
+        break;
       fi;
-      sed -i "${begin}s;^;${4}\n;" $1;
-      break;
-    fi;
-  done;
+    done;
+  fi;
 }
 
 # remove_section <file> <begin search string> <end search string>
 remove_section() {
   begin=`grep -n "$2" $1 | head -n1 | cut -d: -f1`;
-  for end in `grep -n "$3" $1 | cut -d: -f1`; do
-    if [ "$begin" -lt "$end" ]; then
-      if [ "$3" == " " -o -z "$3" ]; then
-        sed -i "/${2//\//\\/}/,/^\s*$/d" $1;
-      else
-        sed -i "/${2//\//\\/}/,/${3//\//\\/}/d" $1;
+  if [ "$begin" ]; then
+    test "$3" == " " -o -z "$3" && endstr='^$' || endstr="$3";
+    for end in `grep -n "$endstr" $1 | cut -d: -f1`; do
+      if [ "$end" ] && [ "$begin" -lt "$end" ]; then
+        if [ "$3" == " " -o -z "$3" ]; then
+          sed -i "/${2//\//\\/}/,/^\s*$/d" $1;
+        else
+          sed -i "/${2//\//\\/}/,/${3//\//\\/}/d" $1;
+        fi;
+        break;
       fi;
-      break;
-    fi;
-  done;
+    done;
+  fi;
 }
 
 # insert_line <file> <if search string> <before|after> <line match string> <inserted line>
@@ -384,7 +408,7 @@ insert_line() {
       after) offset=1;;
     esac;
     line=$((`grep -n "$4" $1 | head -n1 | cut -d: -f1` + offset));
-    if [ "$(wc -l $1 | cut -d\  -f1)" -lt "$line" ]; then
+    if [ -f $1 -a "$line" ] && [ "$(wc -l $1 | cut -d\  -f1)" -lt "$line" ]; then
       echo "$5" >> $1;
     else
       sed -i "${line}s;^;${5}\n;" $1;
@@ -483,8 +507,19 @@ patch_prop() {
   fi;
 }
 
+# allow multi-partition ramdisk modifying configurations (using reset_ak)
+if [ ! -d "$ramdisk" -a ! -d "$patch" ]; then
+  if [ -d "$(basename $block)-files" ]; then
+    cp -af /tmp/anykernel/$(basename $block)-files/* /tmp/anykernel;
+  else
+    mkdir -p /tmp/anykernel/$(basename $block)-files;
+  fi;
+  touch /tmp/anykernel/$(basename $block)-files/current;
+fi;
+test ! -d "$ramdisk" && mkdir -p $ramdisk;
+
 # slot detection enabled by is_slot_device=1 (from anykernel.sh)
-if [ "$is_slot_device" == 1 ]; then
+if [ "$is_slot_device" == 1 -o "$is_slot_device" == "auto" ]; then
   slot=$(getprop ro.boot.slot_suffix 2>/dev/null);
   test ! "$slot" && slot=$(grep -o 'androidboot.slot_suffix=.*$' /proc/cmdline | cut -d\  -f1 | cut -d= -f2);
   if [ ! "$slot" ]; then
@@ -492,8 +527,10 @@ if [ "$is_slot_device" == 1 ]; then
     test ! "$slot" && slot=$(grep -o 'androidboot.slot=.*$' /proc/cmdline | cut -d\  -f1 | cut -d= -f2);
     test "$slot" && slot=_$slot;
   fi;
-  test "$slot" && block=$block$slot;
-  if [ $? != 0 -o ! -e "$block" ]; then
+  if [ "$slot" ]; then
+    test -e "$block$slot" && block=$block$slot;
+  fi;
+  if [ $? != 0 -a "$is_slot_device" == 1 ]; then
     ui_print " "; ui_print "Unable to determine active boot slot. Aborting..."; exit 1;
   fi;
 fi;

@@ -1,195 +1,114 @@
 on init
-	# Disable UFS powersaving
-	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 0
-	write /sys/devices/soc/${ro.boot.bootdevice}/clkgate_enable 0
-	write /sys/devices/soc/${ro.boot.bootdevice}/hibern8_on_idle_enable 0
-	write /sys/module/lpm_levels/parameters/sleep_disabled Y
-    
-	# set default schedTune value for foreground/top-app (only affects EAS)
+# set default schedTune value for foreground/top-app (only affects EAS)
 	write /dev/stune/foreground/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.boost 10
 
-	# Setup cpusets used by the VR services.
-	mkdir /dev/cpuset/kernel 0750 root system
-	write /dev/cpuset/kernel/cpus 0
-	write /dev/cpuset/kernel/mems 0
-	chown system system /dev/cpuset/kernel/tasks
-	chmod 0660 /dev/cpuset/kernel/tasks
-
-	mkdir /dev/cpuset/system 0750 root system
-	write /dev/cpuset/system/cpus 0
-	write /dev/cpuset/system/mems 0
-	chown system system /dev/cpuset/system/tasks
-	chmod 0660 /dev/cpuset/system/tasks
-
-	mkdir /dev/cpuset/system/performance 0750 root system
-	write /dev/cpuset/system/performance/cpus 0
-	write /dev/cpuset/system/performance/mems 0
-	chown system system /dev/cpuset/system/performance/tasks
-	chmod 0660 /dev/cpuset/system/performance/tasks
-
-	mkdir /dev/cpuset/system/background 0750 root system
-	write /dev/cpuset/system/background/cpus 0
-	write /dev/cpuset/system/background/mems 0
-	chown system system /dev/cpuset/system/background/tasks
-	chmod 0660 /dev/cpuset/system/background/tasks
-
-	mkdir /dev/cpuset/application 0750 root system
-	write /dev/cpuset/application/cpus 0
-	write /dev/cpuset/application/mems 0
-	chown system system /dev/cpuset/application/tasks
-	chmod 0660 /dev/cpuset/application/tasks
-
-	mkdir /dev/cpuset/application/performance 0750 root system
-	write /dev/cpuset/application/performance/cpus 0
-	write /dev/cpuset/application/performance/mems 0
-	chown system system /dev/cpuset/application/performance/tasks
-	chmod 0660 /dev/cpuset/application/performance/tasks
-
-	mkdir /dev/cpuset/application/background 0750 root system
-	write /dev/cpuset/application/background/cpus 0
-	write /dev/cpuset/application/background/mems 0
-	chown system system /dev/cpuset/application/background/tasks
-	chmod 0660 /dev/cpuset/application/background/tasks
-
-	# Disable retention
-	write /sys/module/lpm_levels/system/pwr/cpu0/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/pwr/cpu1/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/pwr/cpu2/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/pwr/cpu3/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/cpu4/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/cpu5/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/cpu6/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/cpu7/ret/idle_enabled N
-	write /sys/module/lpm_levels/system/pwr/pwr-l2-dynret/idle_enabled N
-	write /sys/module/lpm_levels/system/pwr/pwr-l2-ret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/perf-l2-dynret/idle_enabled N
-	write /sys/module/lpm_levels/system/perf/perf-l2-ret/idle_enabled N
-
-	# b/37682684 Enable suspend clock reporting
-	write /sys/kernel/debug/clk/debug_suspend 1
-
 on late-fs
-    # boot time fs tune
-    write /sys/block/sda/queue/iostats 0
-    write /sys/block/sda/queue/scheduler cfq
-    write /sys/block/sda/queue/iosched/slice_idle 0
-    write /sys/block/sda/queue/read_ahead_kb 2048
-    write /sys/block/sda/queue/nr_requests 256
-    write /sys/block/sde/queue/iostats 0
-    write /sys/block/sde/queue/scheduler cfq
-    write /sys/block/sde/queue/iosched/slice_idle 0
-    write /sys/block/sde/queue/read_ahead_kb 2048
-    write /sys/block/sde/queue/nr_requests 256 
+# boot time fs tune
+	write /sys/block/sda/queue/iostats 0
+	write /sys/block/sda/queue/scheduler cfq
+	write /sys/block/sda/queue/iosched/slice_idle 0
+	write /sys/block/sda/queue/read_ahead_kb 2048
+	write /sys/block/sda/queue/nr_requests 256
+	write /sys/block/sde/queue/iostats 0
+	write /sys/block/sde/queue/scheduler cfq
+	write /sys/block/sde/queue/iosched/slice_idle 0
+	write /sys/block/sde/queue/read_ahead_kb 2048
+	write /sys/block/sde/queue/nr_requests 256 
+
+on post-fs
+	# Bind mount modules and custom system blobs
+	mount auto /WCNSS_qcom_cfg.ini /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini bind
+	mount auto /perfboostsconfig.xml /system/vendor/etc/perf/perfboostsconfig.xml bind
+	mount auto /powerhint.xml /system/vendor/etc/powerhint.xml bind
+	mount auto /msm_irqbalance.conf /system/vendor/etc/msm_irqbalance.conf bind
+	mount auto /modules/system/lib/modules/br_netfilter.ko /system/lib/modules/br_netfilter.ko bind
+	mount auto /modules/system/lib/modules/mpq-adapter.ko /system/lib/modules/mpq-adapter.ko bind
+	mount auto /modules/system/lib/modules/mpq-dmx-hw-plugin.ko /system/lib/modules/mpq-dmx-hw-plugin.ko bind
+	mount auto /modules/system/vendor/lib/modules/msm_11ad_proxy.ko /system/lib/modules/msm_11ad_proxy.ko bind
+	mount auto /modules/system/lib/modules/tspp.ko /system/lib/modules/tspp.ko bind
+	mount auto /modules/system/vendor/lib/modules/wil6210.ko /system/lib/modules/wil6210.ko bind
+	mount auto /modules/system/lib/modules/wlan.ko /system/lib/modules/qca_cld3/qca_cld3_wlan.ko bind
+	mount auto /modules/system/vendor/lib/modules/msm_11ad_proxy.ko /system/vendor/lib/modules/msm_11ad_proxy.ko bind
+	mount auto /modules/system/vendor/lib/modules/wil6210.ko /system/vendor/lib/modules/wil6210.ko bind
+	mount auto /modules/system/lib/modules/wlan.ko /system/vendor/lib/modules/qca_cld3_wlan.ko bind
 
 on boot
-	# update cpusets now that processors are up
+# update cpusets now that processors are up
 	write /dev/cpuset/top-app/cpus 0-7
 	write /dev/cpuset/foreground/cpus 0-7
 	write /dev/cpuset/foreground/boost/cpus 0-7
 	write /dev/cpuset/background/cpus 0-7
 	write /dev/cpuset/system-background/cpus 0-7
-
-	# Update DVR cpusets to boot-time values.
-	write /dev/cpuset/kernel/cpus 0-7
-	write /dev/cpuset/system/cpus 0-7
-	write /dev/cpuset/system/performance/cpus 0-7
-	write /dev/cpuset/system/background/cpus 0-7
-	write /dev/cpuset/system/cpus 0-7
-	write /dev/cpuset/application/cpus 0-7
-	write /dev/cpuset/application/performance/cpus 0-7
-	write /dev/cpuset/application/background/cpus 0-7
-	write /dev/cpuset/application/cpus 0-7
-
-	# set default schedTune value for foreground/top-app (only affects EAS)
+# set default schedTune value for foreground/top-app (only affects EAS)
 	write /dev/stune/foreground/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.boost 1
 
 on enable-low-power
-    # according to Qcom this legacy value improves first launch latencies
-    # stock value is 512k
-    setprop dalvik.vm.heapminfree 2m
+# according to Qcom this legacy value improves first launch latencies
+# stock value is 512k
+	setprop dalvik.vm.heapminfree 2m
 
-	# Start IOP
-	#start iop
-
-	# Disable thermal bcl hotplug to switch governor
+# Disable thermal bcl hotplug to switch governor
 	write /sys/module/msm_thermal/core_control/enabled 0
 
-	# Online CPU4
+# Online CPU4
 	write /sys/devices/system/cpu/cpu4/online 1
 
-	# configure governor settings for little cluster
-	# write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "schedutil"
-	# write /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 500
-	# write /sys/devices/system/cpu/cpufreq/policy0/schedutil/down_rate_limit_us 20000
-
-	# configure governor settings for big cluster
-	# write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "schedutil"
-	# write /sys/devices/system/cpu/cpufreq/policy4/schedutil/up_rate_limit_us 500
-	# write /sys/devices/system/cpu/cpufreq/policy4/schedutil/down_rate_limit_us 20000
-
+# configure governor settings for little cluster
 	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "schedalucard"
-	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "schedalucard"
+	write /sys/devices/system/cpu/cpu0/cpufreq/schedalucard/iowait_boost_enable 1
 
-	# Enable thermal bcl hotplug to switch governor
+# configure governor settings for big cluster
+	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "schedalucard"
+	write /sys/devices/system/cpu/cpu4/cpufreq/schedalucard/iowait_boost_enable 1
+
+# Enable thermal bcl hotplug to switch governor
 	write /sys/module/msm_thermal/core_control/enabled 1
 
-	# Enable input boost configuration
+# Enable input boost configuration
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1248000 4:1574400"
 	write /sys/module/cpu_boost/parameters/input_boost_ms 40
 	write /sys/module/cpu_boost/parameters/input_boost_off_ms 80
+# OOS 5.0.2 Select Top-app boost group as default
+	write /sys/module/cpu_boost/parameters/dynamic_stune_group_idx 3
+# Set default value for Dynamic Stune Boost
+	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 1
 
-	# Enable UFS powersaving
-	write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
-	write /sys/devices/soc/${ro.boot.bootdevice}/clkgate_enable 1
-	write /sys/devices/soc/${ro.boot.bootdevice}/hibern8_on_idle_enable 1
-	write /sys/module/lpm_levels/parameters/sleep_disabled N
 
-	# update cpusets now that boot is complete and we want better load balancing
+# update cpusets now that boot is complete and we want better load balancing
 	write /dev/cpuset/top-app/cpus 0-7
 	write /dev/cpuset/foreground/boost/cpus 0-3,6-7
 	write /dev/cpuset/foreground/cpus 0-3,6-7
 	write /dev/cpuset/background/cpus 0-1
 	write /dev/cpuset/system-background/cpus 0-3
 
-	# Update DVR cpusets to runtime values.
-	write /dev/cpuset/kernel/cpus 2,3
-	write /dev/cpuset/system/performance/cpus 6-7
-	write /dev/cpuset/system/background/cpus 0-1
-	write /dev/cpuset/system/cpus 0-1,6-7
-	write /dev/cpuset/application/performance/cpus 4-5
-	write /dev/cpuset/application/background/cpus 0-1
-	write /dev/cpuset/application/cpus 0-1,4-5
+# end boot time fs tune
+	write /sys/block/sda/queue/read_ahead_kb 1024
+	write /sys/block/sda/queue/nr_requests 128
+	write /sys/block/sda/queue/iostats 1
+	write /sys/block/sde/queue/read_ahead_kb 512
+	write /sys/block/sde/queue/nr_requests 128
+	write /sys/block/sde/queue/iostats 1
 
-	# OOS 5.0.2 Select Top-app boost group as default
-	write /sys/module/cpu_boost/parameters/dynamic_stune_group_idx 3
+# Toggle Sched Features
+	write /sys/kernel/debug/sched_features "NO_FBT_STRICT_ORDER"
 
-	# Set default value for Dynamic Stune Boost
-	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 1
+# MISC
+	chown system system /sys/devices/platform/kcal_ctrl.0/kcal
+	chown system system /sys/devices/platform/kcal_ctrl.0/kcal_cont
+	chown system system /sys/devices/platform/kcal_ctrl.0/kcal_hue
+	chown system system /sys/devices/platform/kcal_ctrl.0/kcal_sat
+	chown system system /sys/devices/platform/kcal_ctrl.0/kcal_val
 
-    # end boot time fs tune
-    write /sys/block/sda/queue/read_ahead_kb 1024
-    write /sys/block/sda/queue/nr_requests 128
-    write /sys/block/sda/queue/iostats 1
-    write /sys/block/sde/queue/read_ahead_kb 512
-    write /sys/block/sde/queue/nr_requests 128
-    write /sys/block/sde/queue/iostats 1
-
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal_cont
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal_hue
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal_sat
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal_val
-
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq
-    chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq
-    chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor
+	chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+	chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+	chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+	chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq
+	chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq
+	chown system system /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor
 
 	write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
 	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 300000
@@ -197,9 +116,6 @@ on enable-low-power
 on property:sys.boot_completed=1
 	trigger enable-low-power
 
-    exec u:r:su:s0 root root -- /init.supolicy.sh
-    exec u:r:supersu:s0 root root -- /init.supolicy.sh
-
-    exec u:r:init:s0 -- /init.special_power.sh
-    exec u:r:su:s0 root root -- /init.special_power.sh
-    exec u:r:supersu:s0 root root -- /init.special_power.sh
+	exec u:r:init:s0 -- /init.special_power.sh
+	exec u:r:su:s0 root root -- /init.special_power.sh
+	exec u:r:supersu:s0 root root -- /init.special_power.sh
