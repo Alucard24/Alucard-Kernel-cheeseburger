@@ -34,10 +34,7 @@
 #error "WireGuard requires Linux >= 3.10"
 #endif
 
-#if defined(ISRHEL7)
-#include <linux/skbuff.h>
-#define headers_end headers_start
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0) && !defined(ISRHEL7)
 #define headers_start data
 #define headers_end data
 #endif
@@ -113,7 +110,7 @@ static inline bool ipv6_mod_enabled(void)
 }
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0) && !defined(ISRHEL7)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 #include <linux/skbuff.h>
 static inline void skb_reset_tc(struct sk_buff *skb)
 {
@@ -124,8 +121,6 @@ static inline void skb_reset_tc(struct sk_buff *skb)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
-#include <linux/random.h>
-#ifndef CANARY_MASK
 #include <linux/siphash.h>
 static inline u32 get_random_u32(void)
 {
@@ -142,7 +137,6 @@ static inline u32 get_random_u32(void)
 #endif
 	return siphash_2u32(counter++, get_random_int(), &key);
 }
-#endif
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0) && !defined(ISRHEL7)
@@ -179,7 +173,7 @@ static inline void netif_keep_dst(struct net_device *dev)
 #endif
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0) && !defined(ISRHEL7)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
 #include "checksum/checksum_partial_compat.h"
 static inline void *our_pskb_put(struct sk_buff *skb, struct sk_buff *tail, int len)
 {
@@ -447,7 +441,7 @@ static inline void kvfree_ours(const void *addr)
 #define nla_parse_nested(a, b, c, d, e) nla_parse_nested(a, b, c, d)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0) && !defined(ISRHEL7)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
 static inline struct nlattr **genl_family_attrbuf(const struct genl_family *family)
 {
 	return family->attrbuf;
@@ -470,9 +464,9 @@ static inline struct nlattr **genl_family_attrbuf(const struct genl_family *fami
 #endif
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0) && !defined(ISRHEL7)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
 #include <net/genetlink.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0) && !defined(ISRHEL7)
 #define genl_register_family(a) genl_register_family_with_ops(a, genl_ops, ARRAY_SIZE(genl_ops))
 #define COMPAT_CANNOT_USE_CONST_GENL_OPS
 #else
@@ -581,15 +575,6 @@ struct _____dummy_container { char dev; };
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #include <net/genetlink.h>
 #define genl_dump_check_consistent(a, b) genl_dump_check_consistent(a, b, &genl_family)
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0) && !defined(ISRHEL7) && !defined(ISOPENSUSE15)
-static inline void *skb_put_data(struct sk_buff *skb, const void *data, unsigned int len)
-{
-	void *tmp = skb_put(skb, len);
-	memcpy(tmp, data, len);
-	return tmp;
-}
 #endif
 
 /* https://lkml.org/lkml/2017/6/23/790 */

@@ -14,12 +14,14 @@ endif
 ARCH := $(firstword $(subst -, ,$(CBUILD)))
 
 # Set these from the environment to override
-KERNEL_VERSION ?= 4.16.9
+KERNEL_VERSION ?= 4.16.2
 BUILD_PATH ?= $(PWD)/../../../qemu-build/$(ARCH)
 DISTFILES_PATH ?= $(PWD)/distfiles
 DEBUG_KERNEL ?= no
 NR_CPUS ?= 4
 
+DOWNLOAD := wget -O
+# DOWNLOAD := curl -f -o
 MIRROR := https://download.wireguard.com/qemu-test/distfiles/
 
 WIREGUARD_SOURCES := $(wildcard ../../*.c ../../*.h ../../selftest/*.h ../../crypto/*.c ../../crypto/*.h ../../crypto/*.S ../../compat/*.h)
@@ -39,7 +41,7 @@ endef
 define file_download =
 $(DISTFILES_PATH)/$(1):
 	mkdir -p $(DISTFILES_PATH)
-	flock -x $$@.lock -c '[ -f $$@ ] && exit 0; wget -O $$@ $(MIRROR)$(1) || wget -t inf --retry-on-http-error=404 -O $$@ $(2)$(1) || rm -f $$@'
+	flock -x $$@.lock -c '[ -f $$@ ] && exit 0; $(DOWNLOAD) $$@ $(MIRROR)$(1) || $(DOWNLOAD) $$@ $(2)$(1) || rm -f $$@'
 endef
 
 ifeq ($(findstring -rc,$(KERNEL_VERSION)),)

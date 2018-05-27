@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <inttypes.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
 #include <net/if.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -391,7 +390,7 @@ int show_main(int argc, char *argv[])
 		char *interfaces = ipc_list_devices(), *interface;
 
 		if (!interfaces) {
-			perror("Unable to list interfaces");
+			perror("Unable to get devices");
 			return 1;
 		}
 		interface = interfaces;
@@ -399,7 +398,7 @@ int show_main(int argc, char *argv[])
 			struct wgdevice *device = NULL;
 
 			if (ipc_get_device(&device, interface) < 0) {
-				perror("Unable to access interface");
+				perror("Unable to get device");
 				continue;
 			}
 			if (argc == 3) {
@@ -425,7 +424,7 @@ int show_main(int argc, char *argv[])
 		}
 		interfaces = ipc_list_devices();
 		if (!interfaces) {
-			perror("Unable to list interfaces");
+			perror("Unable to get devices");
 			return 1;
 		}
 		interface = interfaces;
@@ -438,7 +437,7 @@ int show_main(int argc, char *argv[])
 		struct wgdevice *device = NULL;
 
 		if (ipc_get_device(&device, argv[1]) < 0) {
-			perror("Unable to access interface");
+			perror("Unable to get device");
 			return 1;
 		}
 		if (argc == 3) {
