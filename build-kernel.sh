@@ -95,8 +95,10 @@ BUILD_NOW()
 			fi;
 		done;
 
-		chmod 755 READY-KERNEL/ramdisk/modules/system/lib/modules/*.ko
-		chmod 755 READY-KERNEL/ramdisk/modules/system/vendor/lib/modules/*.ko
+		if [ -e "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/lib/modules/wlan.ko ]; then
+			chmod 755 READY-KERNEL/ramdisk/modules/system/lib/modules/*.ko
+			chmod 755 READY-KERNEL/ramdisk/modules/system/vendor/lib/modules/*.ko
+		fi;
 
 		if [ "$PYTHON_WAS_3" -eq "1" ]; then
 			rm /usr/bin/python
@@ -114,8 +116,12 @@ BUILD_NOW()
 		echo "Cleaning";
 		rm "$KERNELDIR"/READY-KERNEL/Image.gz-dtb;
 		rm "$KERNELDIR"/arch/arm64/boot/Image.gz-dtb;
-		rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/lib/modules/*.ko;
-		rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/vendor/lib/modules/*.ko;
+		if [ -e "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/lib/modules/wlan.ko ]; then
+			rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/lib/modules/*.ko;
+		fi;
+		if [ -e "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/vendor/lib/modules/wil6210.ko ]; then
+			rm "$KERNELDIR"/READY-KERNEL/ramdisk/modules/system/vendor/lib/modules/*.ko;
+		fi;
 		rm "$KERNELDIR"/READY-KERNEL/config/.config
 		echo "All Done";
 	else
