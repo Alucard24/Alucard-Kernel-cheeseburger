@@ -17,24 +17,24 @@ on late-fs
 	write /sys/block/sde/queue/read_ahead_kb 2048
 	write /sys/block/sde/queue/nr_requests 256 
 
-on post-fs
-	# Bind mount modules and custom system blobs
-	mount auto /WCNSS_qcom_cfg.ini /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini bind
-	mount auto /perfboostsconfig.xml /system/vendor/etc/perf/perfboostsconfig.xml bind
-	mount auto /powerhint.xml /system/vendor/etc/powerhint.xml bind
-	mount auto /msm_irqbalance.conf /system/vendor/etc/msm_irqbalance.conf bind
-	mount auto /modules/system/lib/modules/br_netfilter.ko /system/lib/modules/br_netfilter.ko bind
-	mount auto /modules/system/lib/modules/mpq-adapter.ko /system/lib/modules/mpq-adapter.ko bind
-	mount auto /modules/system/lib/modules/mpq-dmx-hw-plugin.ko /system/lib/modules/mpq-dmx-hw-plugin.ko bind
-	mount auto /modules/system/vendor/lib/modules/msm_11ad_proxy.ko /system/lib/modules/msm_11ad_proxy.ko bind
-	mount auto /modules/system/lib/modules/tspp.ko /system/lib/modules/tspp.ko bind
-	mount auto /modules/system/vendor/lib/modules/wil6210.ko /system/lib/modules/wil6210.ko bind
-	mount auto /modules/system/lib/modules/wlan.ko /system/lib/modules/qca_cld3/qca_cld3_wlan.ko bind
-	mount auto /modules/system/vendor/lib/modules/msm_11ad_proxy.ko /system/vendor/lib/modules/msm_11ad_proxy.ko bind
-	mount auto /modules/system/vendor/lib/modules/wil6210.ko /system/vendor/lib/modules/wil6210.ko bind
-	mount auto /modules/system/lib/modules/wlan.ko /system/vendor/lib/modules/qca_cld3_wlan.ko bind
-
 on boot
+	# Bind mount modules and custom system blobs
+	mount auto /alucard/WCNSS_qcom_cfg.ini /vendor/etc/wifi/WCNSS_qcom_cfg.ini bind
+	mount auto /alucard/perfboostsconfig.xml /vendor/etc/perf/perfboostsconfig.xml bind
+	mount auto /alucard/msm_irqbalance.conf /vendor/etc/msm_irqbalance.conf bind
+	mount auto /alucard/powerhint.xml /vendor/etc/powerhint.xml bind
+	mount auto /alucard/modules/br_netfilter.ko /system/lib/modules/br_netfilter.ko bind
+	mount auto /alucard/modules/mpq-adapter.ko /system/lib/modules/mpq-adapter.ko bind
+	mount auto /alucard/modules/mpq-dmx-hw-plugin.ko /system/lib/modules/mpq-dmx-hw-plugin.ko bind
+	mount auto /alucard/modules/rdbg.ko /system/lib/modules/rdbg.ko bind
+	mount auto /alucard/modules/tspp.ko /system/lib/modules/tspp.ko bind
+	mount auto /alucard/modules/msm_11ad_proxy.ko /system/lib/modules/msm_11ad_proxy.ko bind
+	mount auto /alucard/modules/msm_11ad_proxy.ko /vendor/lib/modules/msm_11ad_proxy.ko bind
+	mount auto /alucard/modules/wil6210.ko /system/lib/modules/wil6210.ko bind
+	mount auto /alucard/modules/wil6210.ko /vendor/lib/modules/wil6210.ko bind
+	mount auto /alucard/modules/wlan.ko /system/lib/modules/qca_cld3/qca_cld3_wlan.ko bind
+	mount auto /alucard/modules/wlan.ko /vendor/lib/modules/qca_cld3_wlan.ko bind
+
 # update cpusets now that processors are up
 	write /dev/cpuset/top-app/cpus 0-7
 	write /dev/cpuset/foreground/cpus 0-7
@@ -45,11 +45,11 @@ on boot
 	write /dev/stune/foreground/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.prefer_idle 1
 	write /dev/stune/top-app/schedtune.boost 1
+	write /dev/stune/top-app/schedtune.dynamic_boost 0
 
-on enable-low-power
-# according to Qcom this legacy value improves first launch latencies
-# stock value is 512k
-	setprop dalvik.vm.heapminfree 2m
+on property:sys.post_boot.parsed=1
+# Adjust LMK Values
+	write /sys/module/lowmemorykiller/parameters/minfree "18432,23040,27648,32256,55296,80640"
 
 # Disable thermal bcl hotplug to switch governor
 	write /sys/module/msm_thermal/core_control/enabled 0
@@ -70,12 +70,12 @@ on enable-low-power
 
 # Enable input boost configuration
 	write /sys/module/cpu_boost/parameters/input_boost_freq "0:1036800 4:0"
-	write /sys/module/cpu_boost/parameters/input_boost_ms 250
-	write /sys/module/cpu_boost/parameters/input_boost_off_ms 500
+	write /sys/module/cpu_boost/parameters/input_boost_ms 150
+	write /sys/module/cpu_boost/parameters/input_boost_off_ms 300
 # OOS 5.0.2 Select Top-app boost group as default
 	write /sys/module/cpu_boost/parameters/dynamic_stune_group_idx 3
 # Set default value for Dynamic Stune Boost
-	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 15
+	write /sys/module/cpu_boost/parameters/dynamic_stune_boost 0
 
 
 # update cpusets now that boot is complete and we want better load balancing
@@ -114,8 +114,6 @@ on enable-low-power
 	write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 300000
 
 on property:sys.boot_completed=1
-	trigger enable-low-power
-
 	exec u:r:init:s0 -- /init.special_power.sh
 	exec u:r:su:s0 root root -- /init.special_power.sh
 	exec u:r:supersu:s0 root root -- /init.special_power.sh
