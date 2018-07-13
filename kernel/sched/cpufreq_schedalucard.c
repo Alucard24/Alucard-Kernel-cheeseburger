@@ -226,9 +226,6 @@ static bool acgov_should_update_freq(struct acgov_policy *sg_policy, u64 time)
 	int index;
 	unsigned long flags;
 
-	if (sg_policy->work_in_progress)
-		return false;
-
 #ifdef CONFIG_MSM_TRACK_FREQ_TARGET_INDEX
 	index = policy->cur_index;
 #else
@@ -276,7 +273,7 @@ static void acgov_update_commit(struct acgov_policy *sg_policy, u64 time,
 
 	if (policy->fast_switch_enabled) {
 		next_freq = cpufreq_driver_fast_switch(policy, next_freq);
-		if (next_freq == CPUFREQ_ENTRY_INVALID)
+		if (!next_freq)
 			return;
 
 		policy->cur = next_freq;
@@ -382,7 +379,7 @@ static void acgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 	rt = (rt * max_cap) >> SCHED_CAPACITY_SHIFT;
 
 	*util = boosted_cpu_util(cpu);
-	if (likely(use_pelt()))
+	if (use_pelt())
 		*util = *util + rt;
 
 	*util = min(*util, max_cap);
@@ -490,9 +487,8 @@ static void acgov_update_single(struct update_util_data *hook, u64 time,
 		 * recently and if the policy limits doesn't change, as 
 		 * the reduction is likely to be premature then.
 		 */
-		if (busy
-			 && next_f < sg_policy->next_freq
-			 && sg_policy->next_freq != UINT_MAX)
+		if (busy && next_f < sg_policy->next_freq &&
+		    sg_policy->next_freq != UINT_MAX)
 			next_f = sg_policy->next_freq;
 	}
 	acgov_update_commit(sg_policy, time, next_f);
@@ -1173,6 +1169,11 @@ static int acgov_start(struct cpufreq_policy *policy)
 		sg_cpu->sg_policy = sg_policy;
 		sg_cpu->flags = SCHED_CPUFREQ_DL;
 		sg_cpu->iowait_boost_max = policy->cpuinfo.max_freq;
+	}
+
+	for_each_cpu(cpu, policy->cpus) {
+		struct acgov_cpu *sg_cpu = &per_cpu(acgov_cpu, cpu);
+
 		cpufreq_add_update_util_hook(cpu, &sg_cpu->update_util,
 					     policy_is_shared(policy) ?
 							acgov_update_shared :
