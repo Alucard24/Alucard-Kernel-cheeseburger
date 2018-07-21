@@ -9,7 +9,7 @@ LANG=C
 # What you need to make configuration easier by using xconfig
 # qt4-dev, qmake-qt4, pkg-config
 
-# toolchain is already exist and set! in kernel git. ../aarch64-linux-android-4.9/bin/
+# toolchain is already exist and set! in kernel git. ../toolchains/bin/
 
 # location
 KERNELDIR=$(readlink -f .);
@@ -72,7 +72,7 @@ BUILD_NOW()
 	fi;
 
 	# build kernel and modules
-	time make ARCH=arm64 CROSS_COMPILE=../aarch64-linux-android-4.9/bin/aarch64-linux-android- -j $NR_CPUS
+	time make ARCH=arm64 CROSS_COMPILE=../toolchains/bin/aarch64-linux-gnu- -j $NR_CPUS
 
 	cp "$KERNELDIR"/.config "$KERNELDIR"/arch/arm64/configs/"$KERNEL_CONFIG_FILE";
 
