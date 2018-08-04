@@ -87,7 +87,7 @@ remove_section init.oem.debug.rc "service oemasserttip" "disabled"
 # Remove packet filtering from WCNSS_qcom_cfg.ini
 cp -pf /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini $ramdisk/alucard/WCNSS_qcom_cfg.ini
 cp -pf /vendor/etc/wifi/WCNSS_qcom_cfg.ini $ramdisk/alucard/WCNSS_qcom_cfg.ini
-remove_line WCNSS_qcom_cfg.ini g_enable_packet_filter_bitmap
+remove_line $ramdisk/alucard/WCNSS_qcom_cfg.ini g_enable_packet_filter_bitmap
 echo "gDisablePacketFilter=1" > $ramdisk/alucard/temp.ini
 cat $ramdisk/alucard/WCNSS_qcom_cfg.ini >> $ramdisk/alucard/temp.ini
 mv $ramdisk/alucard/temp.ini $ramdisk/alucard/WCNSS_qcom_cfg.ini
