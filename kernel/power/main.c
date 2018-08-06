@@ -15,11 +15,14 @@
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
+#ifdef CONFIG_CPU_FREQ_ONEPLUS_QOS
 #include <linux/pm_qos.h>
 #include <linux/cpufreq.h>
+#endif
 
 #include "power.h"
 
+#ifdef CONFIG_CPU_FREQ_ONEPLUS_QOS
 /* Define number of little/big cpu's and frequency
 values based on projects like 8996/8998/sdm845 etc */
 #if defined(CONFIG_ARCH_MSM8998)
@@ -37,6 +40,7 @@ static struct pm_qos_request resumeboost_little_cpu_qos;
 static struct pm_qos_request resumeboost_big_cpu_qos;
 extern int get_resume_wakeup_flag(void);
 extern int get_qpnp_kpdpwr_resume_wakeup_flag(void);
+#endif
 
 DEFINE_MUTEX(pm_mutex);
 
@@ -372,6 +376,7 @@ static suspend_state_t decode_state(const char *buf, size_t n)
 	return PM_SUSPEND_ON;
 }
 
+#ifdef CONFIG_CPU_FREQ_ONEPLUS_QOS
 void resumeboost_fn(void)
 {
         struct cpufreq_policy *policy;
@@ -396,6 +401,7 @@ void resumeboost_fn(void)
                cpufreq_cpu_put(policy);
        }
 }
+#endif
 
 static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 			   const char *buf, size_t n)
@@ -422,7 +428,9 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 
  out:
 	pm_autosleep_unlock();
+#ifdef CONFIG_CPU_FREQ_ONEPLUS_QOS
         resumeboost_fn();
+#endif
 	return error ? error : n;
 }
 
@@ -702,6 +710,7 @@ static int __init pm_init(void)
 
 core_initcall(pm_init);
 
+#ifdef CONFIG_CPU_FREQ_ONEPLUS_QOS
 static int __init init_pm_qos(void)
 {
         pm_qos_add_request(&resumeboost_little_cpu_qos, PM_QOS_C0_CPUFREQ_MIN, MIN_CPUFREQ);
@@ -710,3 +719,4 @@ static int __init init_pm_qos(void)
         return 0;
 }
 late_initcall(init_pm_qos);
+#endif
