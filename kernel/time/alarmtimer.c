@@ -389,6 +389,8 @@ static int alarmtimer_suspend(struct device *dev)
 
 	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
 		__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);
+		dev_err(dev,
+			"Nearest alarm wakeup time < 2sec, avoiding suspend\n");
 		return -EBUSY;
 	}
 
@@ -400,8 +402,10 @@ static int alarmtimer_suspend(struct device *dev)
 
 	/* Set alarm, if in the past reject suspend briefly to handle */
 	ret = rtc_timer_start(rtc, &rtctimer, now, ktime_set(0, 0));
-	if (ret < 0)
+	if (ret < 0) {
 		__pm_wakeup_event(ws, MSEC_PER_SEC);
+		dev_err(dev, "RTC timer start failed, %d\n", ret);
+	}
 	return ret;
 }
 
