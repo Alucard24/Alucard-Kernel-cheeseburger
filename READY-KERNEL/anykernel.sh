@@ -32,6 +32,9 @@ chmod -R 750 $ramdisk/*;
 find $ramdisk -type f -exec chmod 644 {} \;
 chown -R root:root $ramdisk/*;
 
+# Ensure *.sh files in /alucard/ path are executable
+find $ramdisk/alucard -name "*.sh" -exec chmod 750 {} \;
+
 
 ## AnyKernel install
 dump_boot;
@@ -70,19 +73,6 @@ $bin/magiskpolicy --load sepolicy_debug --save sepolicy_debug \
 
 # Remove recovery service so that TWRP isn't overwritten
 remove_section init.rc "service flash_recovery" ""
-
-# Remove suspicious OnePlus services
-remove_section init.oem.rc "service OPNetlinkService" "seclabel"
-remove_section init.oem.rc "service oemsysd" "seclabel"
-remove_section init.oem.rc "service oem_audio_device" "oneshot"
-remove_section init.oem.rc "service atrace" "seclabel"
-remove_section init.oem.rc "service sniffer_set" "seclabel"
-remove_section init.oem.rc "service sniffer_start" "seclabel"
-remove_section init.oem.rc "service sniffer_stop" "seclabel"
-remove_section init.oem.rc "service tcpdump-service" "seclabel"
-remove_section init.oem.debug.rc "service oemlogkit" "socket oemlogkit"
-remove_section init.oem.debug.rc "service dumpstate_log" "seclabel"
-remove_section init.oem.debug.rc "service oemasserttip" "disabled"
 
 # Remove packet filtering from WCNSS_qcom_cfg.ini
 cp -pf /system/vendor/etc/wifi/WCNSS_qcom_cfg.ini $ramdisk/alucard/WCNSS_qcom_cfg.ini
