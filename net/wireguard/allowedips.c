@@ -57,8 +57,8 @@ static void node_free_rcu(struct rcu_head *rcu)
 	})
 static void root_free_rcu(struct rcu_head *rcu)
 {
-	struct allowedips_node *node, *stack[128] =
-		{ container_of(rcu, struct allowedips_node, rcu) };
+	struct allowedips_node *node, *stack[128] = {
+		container_of(rcu, struct allowedips_node, rcu) };
 	unsigned int len = 1;
 
 	while (len > 0 && (node = stack[--len]) &&
@@ -255,7 +255,7 @@ static int add(struct allowedips_node __rcu **trie, u8 bits, const u8 *be_key,
 
 	if (!rcu_access_pointer(*trie)) {
 		node = kzalloc(sizeof(*node), GFP_KERNEL);
-		if (!node)
+		if (unlikely(!node))
 			return -ENOMEM;
 		RCU_INIT_POINTER(node->peer, peer);
 		copy_and_assign_cidr(node, key, cidr, bits);
@@ -268,7 +268,7 @@ static int add(struct allowedips_node __rcu **trie, u8 bits, const u8 *be_key,
 	}
 
 	newnode = kzalloc(sizeof(*newnode), GFP_KERNEL);
-	if (!newnode)
+	if (unlikely(!newnode))
 		return -ENOMEM;
 	RCU_INIT_POINTER(newnode->peer, peer);
 	copy_and_assign_cidr(newnode, key, cidr, bits);
@@ -295,7 +295,7 @@ static int add(struct allowedips_node __rcu **trie, u8 bits, const u8 *be_key,
 					   newnode);
 	} else {
 		node = kzalloc(sizeof(*node), GFP_KERNEL);
-		if (!node) {
+		if (unlikely(!node)) {
 			kfree(newnode);
 			return -ENOMEM;
 		}

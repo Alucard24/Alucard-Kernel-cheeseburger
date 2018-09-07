@@ -176,10 +176,9 @@ static __init int
 horrible_allowedips_insert_v4(struct horrible_allowedips *table,
 			      struct in_addr *ip, uint8_t cidr, void *value)
 {
-	struct horrible_allowedips_node *node =
-		kzalloc(sizeof(struct horrible_allowedips_node), GFP_KERNEL);
+	struct horrible_allowedips_node *node = kzalloc(sizeof(*node), GFP_KERNEL);
 
-	if (!node)
+	if (unlikely(!node))
 		return -ENOMEM;
 	node->ip.in = *ip;
 	node->mask = horrible_cidr_to_mask(cidr);
@@ -193,10 +192,9 @@ static __init int
 horrible_allowedips_insert_v6(struct horrible_allowedips *table,
 			      struct in6_addr *ip, uint8_t cidr, void *value)
 {
-	struct horrible_allowedips_node *node =
-		kzalloc(sizeof(struct horrible_allowedips_node), GFP_KERNEL);
+	struct horrible_allowedips_node *node = kzalloc(sizeof(*node), GFP_KERNEL);
 
-	if (!node)
+	if (unlikely(!node))
 		return -ENOMEM;
 	node->ip.in6 = *ip;
 	node->mask = horrible_cidr_to_mask(cidr);
@@ -256,14 +254,14 @@ static __init bool randomized_test(void)
 	allowedips_init(&t);
 	horrible_allowedips_init(&h);
 
-	peers = kcalloc(NUM_PEERS, sizeof(struct wireguard_peer *), GFP_KERNEL);
-	if (!peers) {
+	peers = kcalloc(NUM_PEERS, sizeof(*peers), GFP_KERNEL);
+	if (unlikely(!peers)) {
 		pr_info("allowedips random self-test: out of memory\n");
 		goto free;
 	}
 	for (i = 0; i < NUM_PEERS; ++i) {
-		peers[i] = kzalloc(sizeof(struct wireguard_peer), GFP_KERNEL);
-		if (!peers[i]) {
+		peers[i] = kzalloc(sizeof(*peers[i]), GFP_KERNEL);
+		if (unlikely(!peers[i])) {
 			pr_info("allowedips random self-test: out of memory\n");
 			goto free;
 		}
@@ -456,8 +454,8 @@ static __init int walk_callback(void *ctx, const u8 *ip, u8 cidr, int family)
 }
 
 #define init_peer(name) do {                                               \
-		name = kzalloc(sizeof(struct wireguard_peer), GFP_KERNEL); \
-		if (!name) {                                               \
+		name = kzalloc(sizeof(*name), GFP_KERNEL);                 \
+		if (unlikely(!name)) {                                     \
 			pr_info("allowedips self-test: out of memory\n");  \
 			goto free;                                         \
 		}                                                          \

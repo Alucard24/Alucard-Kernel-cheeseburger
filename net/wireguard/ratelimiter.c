@@ -84,8 +84,8 @@ static void gc_entries(struct work_struct *work)
 
 bool ratelimiter_allow(struct sk_buff *skb, struct net *net)
 {
-	struct { __be64 ip; u32 net; } data =
-		{ .net = (unsigned long)net & 0xffffffff };
+	struct { __be64 ip; u32 net; } data = {
+		.net = (unsigned long)net & 0xffffffff };
 	struct ratelimiter_entry *entry;
 	struct hlist_head *bucket;
 
@@ -133,7 +133,7 @@ bool ratelimiter_allow(struct sk_buff *skb, struct net *net)
 		goto err_oom;
 
 	entry = kmem_cache_alloc(entry_cache, GFP_KERNEL);
-	if (!entry)
+	if (unlikely(!entry))
 		goto err_oom;
 
 	entry->net = net;
@@ -173,13 +173,13 @@ int ratelimiter_init(void)
 			(1U << 14) / sizeof(struct hlist_head)));
 	max_entries = table_size * 8;
 
-	table_v4 = kvzalloc(table_size * sizeof(struct hlist_head), GFP_KERNEL);
-	if (!table_v4)
+	table_v4 = kvzalloc(table_size * sizeof(*table_v4), GFP_KERNEL);
+	if (unlikely(!table_v4))
 		goto err_kmemcache;
 
 #if IS_ENABLED(CONFIG_IPV6)
-	table_v6 = kvzalloc(table_size * sizeof(struct hlist_head), GFP_KERNEL);
-	if (!table_v6) {
+	table_v6 = kvzalloc(table_size * sizeof(*table_v6), GFP_KERNEL);
+	if (unlikely(!table_v6)) {
 		kvfree(table_v4);
 		goto err_kmemcache;
 	}

@@ -17,26 +17,27 @@
 static struct genl_family genl_family;
 
 static const struct nla_policy device_policy[WGDEVICE_A_MAX + 1] = {
-	[WGDEVICE_A_IFINDEX]	= { .type = NLA_U32 },
-	[WGDEVICE_A_IFNAME]	= { .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 },
-	[WGDEVICE_A_PRIVATE_KEY]= { .len = NOISE_PUBLIC_KEY_LEN },
-	[WGDEVICE_A_PUBLIC_KEY]	= { .len = NOISE_PUBLIC_KEY_LEN },
-	[WGDEVICE_A_FLAGS]	= { .type = NLA_U32 },
-	[WGDEVICE_A_LISTEN_PORT]= { .type = NLA_U16 },
-	[WGDEVICE_A_FWMARK]	= { .type = NLA_U32 },
-	[WGDEVICE_A_PEERS]	= { .type = NLA_NESTED }
+	[WGDEVICE_A_IFINDEX]		= { .type = NLA_U32 },
+	[WGDEVICE_A_IFNAME]		= { .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 },
+	[WGDEVICE_A_PRIVATE_KEY]	= { .len = NOISE_PUBLIC_KEY_LEN },
+	[WGDEVICE_A_PUBLIC_KEY]		= { .len = NOISE_PUBLIC_KEY_LEN },
+	[WGDEVICE_A_FLAGS]		= { .type = NLA_U32 },
+	[WGDEVICE_A_LISTEN_PORT]	= { .type = NLA_U16 },
+	[WGDEVICE_A_FWMARK]		= { .type = NLA_U32 },
+	[WGDEVICE_A_PEERS]		= { .type = NLA_NESTED }
 };
 
 static const struct nla_policy peer_policy[WGPEER_A_MAX + 1] = {
-	[WGPEER_A_PUBLIC_KEY]			= { .len = NOISE_PUBLIC_KEY_LEN },
-	[WGPEER_A_PRESHARED_KEY]		= { .len = NOISE_SYMMETRIC_KEY_LEN },
-	[WGPEER_A_FLAGS]			= { .type = NLA_U32 },
-	[WGPEER_A_ENDPOINT]			= { .len = sizeof(struct sockaddr) },
-	[WGPEER_A_PERSISTENT_KEEPALIVE_INTERVAL]= { .type = NLA_U16 },
-	[WGPEER_A_LAST_HANDSHAKE_TIME]		= { .len = sizeof(struct timespec) },
-	[WGPEER_A_RX_BYTES]			= { .type = NLA_U64 },
-	[WGPEER_A_TX_BYTES]			= { .type = NLA_U64 },
-	[WGPEER_A_ALLOWEDIPS]			= { .type = NLA_NESTED }
+	[WGPEER_A_PUBLIC_KEY]				= { .len = NOISE_PUBLIC_KEY_LEN },
+	[WGPEER_A_PRESHARED_KEY]			= { .len = NOISE_SYMMETRIC_KEY_LEN },
+	[WGPEER_A_FLAGS]				= { .type = NLA_U32 },
+	[WGPEER_A_ENDPOINT]				= { .len = sizeof(struct sockaddr) },
+	[WGPEER_A_PERSISTENT_KEEPALIVE_INTERVAL]	= { .type = NLA_U16 },
+	[WGPEER_A_LAST_HANDSHAKE_TIME]			= { .len = sizeof(struct timespec) },
+	[WGPEER_A_RX_BYTES]				= { .type = NLA_U64 },
+	[WGPEER_A_TX_BYTES]				= { .type = NLA_U64 },
+	[WGPEER_A_ALLOWEDIPS]				= { .type = NLA_NESTED },
+	[WGPEER_A_PROTOCOL_VERSION]			= { .type = NLA_U32 }
 };
 
 static const struct nla_policy allowedip_policy[WGALLOWEDIP_A_MAX + 1] = {
@@ -121,24 +122,25 @@ static int get_peer(struct wireguard_peer *peer, unsigned int index,
 			goto err;
 
 		if (nla_put(skb, WGPEER_A_LAST_HANDSHAKE_TIME,
-			    sizeof(struct timespec),
+			    sizeof(peer->walltime_last_handshake),
 			    &peer->walltime_last_handshake) ||
 		    nla_put_u16(skb, WGPEER_A_PERSISTENT_KEEPALIVE_INTERVAL,
 				peer->persistent_keepalive_interval) ||
 		    nla_put_u64_64bit(skb, WGPEER_A_TX_BYTES, peer->tx_bytes,
 				      WGPEER_A_UNSPEC) ||
 		    nla_put_u64_64bit(skb, WGPEER_A_RX_BYTES, peer->rx_bytes,
-				      WGPEER_A_UNSPEC))
+				      WGPEER_A_UNSPEC) ||
+		    nla_put_u32(skb, WGPEER_A_PROTOCOL_VERSION, 1))
 			goto err;
 
 		read_lock_bh(&peer->endpoint_lock);
 		if (peer->endpoint.addr.sa_family == AF_INET)
 			fail = nla_put(skb, WGPEER_A_ENDPOINT,
-				       sizeof(struct sockaddr_in),
+				       sizeof(peer->endpoint.addr4),
 				       &peer->endpoint.addr4);
 		else if (peer->endpoint.addr.sa_family == AF_INET6)
 			fail = nla_put(skb, WGPEER_A_ENDPOINT,
-				       sizeof(struct sockaddr_in6),
+				       sizeof(peer->endpoint.addr6),
 				       &peer->endpoint.addr6);
 		read_unlock_bh(&peer->endpoint_lock);
 		if (fail)
@@ -173,9 +175,9 @@ static int get_device_start(struct netlink_callback *cb)
 
 	if (ret < 0)
 		return ret;
-	cb->args[2] =
-		(long)kzalloc(sizeof(struct allowedips_cursor), GFP_KERNEL);
-	if (!cb->args[2])
+	cb->args[2] = (long)kzalloc(sizeof(struct allowedips_cursor),
+				    GFP_KERNEL);
+	if (unlikely(!cb->args[2]))
 		return -ENOMEM;
 	wg = lookup_interface(attrs, cb->skb);
 	if (IS_ERR(wg)) {
@@ -334,8 +336,7 @@ static int set_allowedip(struct wireguard_peer *peer, struct nlattr **attrs)
 			nla_data(attrs[WGALLOWEDIP_A_IPADDR]), cidr, peer,
 			&peer->device->device_update_lock);
 	else if (family == AF_INET6 && cidr <= 128 &&
-		 nla_len(attrs[WGALLOWEDIP_A_IPADDR]) ==
-			 sizeof(struct in6_addr))
+		 nla_len(attrs[WGALLOWEDIP_A_IPADDR]) == sizeof(struct in6_addr))
 		ret = allowedips_insert_v6(
 			&peer->device->peer_allowedips,
 			nla_data(attrs[WGALLOWEDIP_A_IPADDR]), cidr, peer,
@@ -362,6 +363,12 @@ static int set_peer(struct wireguard_device *wg, struct nlattr **attrs)
 		preshared_key = nla_data(attrs[WGPEER_A_PRESHARED_KEY]);
 	if (attrs[WGPEER_A_FLAGS])
 		flags = nla_get_u32(attrs[WGPEER_A_FLAGS]);
+
+	ret = -EPFNOSUPPORT;
+	if (attrs[WGPEER_A_PROTOCOL_VERSION]) {
+		if (nla_get_u32(attrs[WGPEER_A_PROTOCOL_VERSION]) != 1)
+			goto out;
+	}
 
 	peer = pubkey_hashtable_lookup(&wg->peer_hashtable,
 				       nla_data(attrs[WGPEER_A_PUBLIC_KEY]));

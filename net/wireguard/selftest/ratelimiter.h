@@ -59,22 +59,22 @@ bool __init ratelimiter_selftest(void)
 	++test;
 
 	skb4 = alloc_skb(sizeof(struct iphdr), GFP_KERNEL);
-	if (!skb4)
+	if (unlikely(!skb4))
 		goto err_nofree;
 	skb4->protocol = htons(ETH_P_IP);
-	hdr4 = (struct iphdr *)skb_put(skb4, sizeof(struct iphdr));
+	hdr4 = (struct iphdr *)skb_put(skb4, sizeof(*hdr4));
 	hdr4->saddr = htonl(8182);
 	skb_reset_network_header(skb4);
 	++test;
 
 #if IS_ENABLED(CONFIG_IPV6)
 	skb6 = alloc_skb(sizeof(struct ipv6hdr), GFP_KERNEL);
-	if (!skb6) {
+	if (unlikely(!skb6)) {
 		kfree_skb(skb4);
 		goto err_nofree;
 	}
 	skb6->protocol = htons(ETH_P_IPV6);
-	hdr6 = (struct ipv6hdr *)skb_put(skb6, sizeof(struct ipv6hdr));
+	hdr6 = (struct ipv6hdr *)skb_put(skb6, sizeof(*hdr6));
 	hdr6->saddr.in6_u.u6_addr32[0] = htonl(1212);
 	hdr6->saddr.in6_u.u6_addr32[1] = htonl(289188);
 	skb_reset_network_header(skb6);
