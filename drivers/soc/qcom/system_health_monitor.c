@@ -49,7 +49,7 @@ static int shm_default_timeout_ms = 2000;
 module_param_named(default_timeout_ms, shm_default_timeout_ms,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 
-#define DEFAULT_SHM_RATELIMIT_INTERVAL (HZ / 5)
+#define DEFAULT_SHM_RATELIMIT_INTERVAL (100 / 5)
 #define DEFAULT_SHM_RATELIMIT_BURST 2
 
 #define SHM_ILCTXT_NUM_PAGES 2

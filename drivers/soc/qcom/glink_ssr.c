@@ -24,7 +24,7 @@
 #include <soc/qcom/subsystem_notif.h>
 #include "glink_private.h"
 
-#define GLINK_SSR_REPLY_TIMEOUT	HZ
+#define GLINK_SSR_REPLY_TIMEOUT	100
 #define GLINK_SSR_INTENT_REQ_TIMEOUT_MS 500
 #define GLINK_SSR_EVENT_INIT ~0
 #define NUM_LOG_PAGES 3

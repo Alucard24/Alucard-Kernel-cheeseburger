@@ -1570,7 +1570,7 @@ static int ssr(struct glink_transport_if *if_ptr)
 	spin_unlock_irqrestore(&einfo->channels_lock, flags);
 
 	einfo->xprt_if.glink_core_if_ptr->link_down(&einfo->xprt_if);
-	schedule_delayed_work(&einfo->ssr_work, 5 * HZ);
+	schedule_delayed_work(&einfo->ssr_work, 5 * 100);
 	return 0;
 }
 
