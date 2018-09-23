@@ -1551,7 +1551,7 @@ static int i2c_register_adapter(struct i2c_adapter *adap)
 
 	/* Set default timeout to 1 second if not already set */
 	if (adap->timeout == 0)
-		adap->timeout = 100;
+		adap->timeout = HZ;
 
 	dev_set_name(&adap->dev, "i2c-%d", adap->nr);
 	adap->dev.bus = &i2c_bus_type;
