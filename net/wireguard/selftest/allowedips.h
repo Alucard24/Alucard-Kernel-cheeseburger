@@ -463,8 +463,8 @@ static __init int walk_callback(void *ctx, const u8 *ip, u8 cidr, int family)
 	} while (0)
 
 #define insert(version, mem, ipa, ipb, ipc, ipd, cidr)                    \
-	allowedips_insert_v##version(&t, ip##version(ipa, ipb, ipc, ipd), \
-				     cidr, mem, &mutex)
+	wg_allowedips_insert_v##version(&t, ip##version(ipa, ipb, ipc, ipd), \
+					cidr, mem, &mutex)
 
 #define maybe_fail() do {                                               \
 		++i;                                                    \
@@ -491,7 +491,7 @@ static __init int walk_callback(void *ctx, const u8 *ip, u8 cidr, int family)
 		maybe_fail();     \
 	} while (0)
 
-bool __init allowedips_selftest(void)
+bool __init wg_allowedips_selftest(void)
 {
 	struct wireguard_peer *a = NULL, *b = NULL, *c = NULL, *d = NULL,
 			      *e = NULL, *f = NULL, *g = NULL, *h = NULL;
@@ -513,7 +513,7 @@ bool __init allowedips_selftest(void)
 	mutex_init(&mutex);
 	mutex_lock(&mutex);
 
-	allowedips_init(&t);
+	wg_allowedips_init(&t);
 	init_peer(a);
 	init_peer(b);
 	init_peer(c);
@@ -592,37 +592,39 @@ bool __init allowedips_selftest(void)
 	insert(4, a, 128, 0, 0, 0, 32);
 	insert(4, a, 192, 0, 0, 0, 32);
 	insert(4, a, 255, 0, 0, 0, 32);
-	allowedips_remove_by_peer(&t, a, &mutex);
+	wg_allowedips_remove_by_peer(&t, a, &mutex);
 	test_negative(4, a, 1, 0, 0, 0);
 	test_negative(4, a, 64, 0, 0, 0);
 	test_negative(4, a, 128, 0, 0, 0);
 	test_negative(4, a, 192, 0, 0, 0);
 	test_negative(4, a, 255, 0, 0, 0);
 
-	allowedips_free(&t, &mutex);
-	allowedips_init(&t);
+	wg_allowedips_free(&t, &mutex);
+	wg_allowedips_init(&t);
 	insert(4, a, 192, 168, 0, 0, 16);
 	insert(4, a, 192, 168, 0, 0, 24);
-	allowedips_remove_by_peer(&t, a, &mutex);
+	wg_allowedips_remove_by_peer(&t, a, &mutex);
 	test_negative(4, a, 192, 168, 0, 1);
 
-	/* These will hit the WARN_ON(len >= 128) in free_node if something goes wrong. */
+	/* These will hit the WARN_ON(len >= 128) in free_node if something
+	 * goes wrong.
+	 */
 	for (i = 0; i < 128; ++i) {
 		part = cpu_to_be64(~(1LLU << (i % 64)));
 		memset(&ip, 0xff, 16);
 		memcpy((u8 *)&ip + (i < 64) * 8, &part, 8);
-		allowedips_insert_v6(&t, &ip, 128, a, &mutex);
+		wg_allowedips_insert_v6(&t, &ip, 128, a, &mutex);
 	}
 
-	allowedips_free(&t, &mutex);
+	wg_allowedips_free(&t, &mutex);
 
-	allowedips_init(&t);
+	wg_allowedips_init(&t);
 	insert(4, a, 192, 95, 5, 93, 27);
 	insert(6, a, 0x26075300, 0x60006b00, 0, 0xc05f0543, 128);
 	insert(4, a, 10, 1, 0, 20, 29);
 	insert(6, a, 0x26075300, 0x6d8a6bf8, 0xdab1f1df, 0xc05f1523, 83);
 	insert(6, a, 0x26075300, 0x6d8a6bf8, 0xdab1f1df, 0xc05f1523, 21);
-	allowedips_walk_by_peer(&t, cursor, a, walk_callback, &wctx, &mutex);
+	wg_allowedips_walk_by_peer(&t, cursor, a, walk_callback, &wctx, &mutex);
 	test_boolean(wctx.count == 5);
 	test_boolean(wctx.found_a);
 	test_boolean(wctx.found_b);
@@ -640,7 +642,7 @@ bool __init allowedips_selftest(void)
 		pr_info("allowedips self-tests: pass\n");
 
 free:
-	allowedips_free(&t, &mutex);
+	wg_allowedips_free(&t, &mutex);
 	kfree(a);
 	kfree(b);
 	kfree(c);

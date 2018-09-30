@@ -50,7 +50,7 @@ KERNEL_URL_DIRECTORY := https://git.kernel.org/torvalds/t/
 endif
 
 $(eval $(call tar_download,KERNEL,linux,$(KERNEL_VERSION),.tar.gz,$(KERNEL_URL_DIRECTORY)))
-$(eval $(call tar_download,MUSL,musl,1.1.19,.tar.gz,https://www.musl-libc.org/releases/))
+$(eval $(call tar_download,MUSL,musl,1.1.20,.tar.gz,https://www.musl-libc.org/releases/))
 $(eval $(call tar_download,LIBMNL,libmnl,1.0.4,.tar.bz2,https://www.netfilter.org/projects/libmnl/files/))
 $(eval $(call tar_download,IPERF,iperf,3.1.7,.tar.gz,http://downloads.es.net/pub/iperf/))
 $(eval $(call tar_download,BASH,bash,4.4.18,.tar.gz,https://ftp.gnu.org/gnu/bash/))
@@ -86,7 +86,27 @@ else
 QEMU_MACHINE := -cpu cortex-a53 -machine virt
 CFLAGS += -march=armv8-a -mtune=cortex-a53
 endif
+else ifeq ($(ARCH),aarch64_be)
+QEMU_ARCH := aarch64
+KERNEL_ARCH := arm64
+KERNEL_BZIMAGE := $(KERNEL_PATH)/arch/arm64/boot/Image
+ifeq ($(CHOST),$(CBUILD))
+QEMU_MACHINE := -cpu host -machine virt,gic_version=host,accel=kvm
+else
+QEMU_MACHINE := -cpu cortex-a53 -machine virt
+CFLAGS += -march=armv8-a -mtune=cortex-a53
+endif
 else ifeq ($(ARCH),arm)
+QEMU_ARCH := arm
+KERNEL_ARCH := arm
+KERNEL_BZIMAGE := $(KERNEL_PATH)/arch/arm/boot/zImage
+ifeq ($(CHOST),$(CBUILD))
+QEMU_MACHINE := -cpu host -machine virt,gic_version=host,accel=kvm
+else
+QEMU_MACHINE := -cpu cortex-a15 -machine virt
+CFLAGS += -march=armv7-a -mtune=cortex-a15 -mabi=aapcs-linux
+endif
+else ifeq ($(ARCH),armeb)
 QEMU_ARCH := arm
 KERNEL_ARCH := arm
 KERNEL_BZIMAGE := $(KERNEL_PATH)/arch/arm/boot/zImage
@@ -170,8 +190,17 @@ else
 QEMU_MACHINE := -machine ppce500
 endif
 CFLAGS += -mcpu=powerpc -mlong-double-64 -msecure-plt
+else ifeq ($(ARCH),m68k)
+QEMU_ARCH := m68k
+KERNEL_ARCH := m68k
+KERNEL_BZIMAGE := $(KERNEL_PATH)/vmlinux
+ifeq ($(CHOST),$(CBUILD))
+QEMU_MACHINE := -cpu host,accel=kvm -machine q800
 else
-$(error I only build: x86_64, i686, arm, aarch64, mips, mipsel, mips64, mips64el, powerpc)
+QEMU_MACHINE := -machine q800
+endif
+else
+$(error I only build: x86_64, i686, arm, armeb, aarch64, aarch64_be, mips, mipsel, mips64, mips64el, powerpc, m68k)
 endif
 
 REAL_CC := $(CBUILD)-gcc
@@ -236,10 +265,10 @@ always-pull: $(KERNEL_PATH)/.installed
 $(KERNEL_BZIMAGE): always-pull
 endif
 
-$(KERNEL_PATH)/.config: kernel.config arch/$(QEMU_ARCH).config | $(KERNEL_PATH)/.installed
+$(KERNEL_PATH)/.config: kernel.config arch/$(ARCH).config | $(KERNEL_PATH)/.installed
 	cp kernel.config $(KERNEL_PATH)/minimal.config
 	printf 'CONFIG_NR_CPUS=$(NR_CPUS)\nCONFIG_INITRAMFS_SOURCE="$(BUILD_PATH)/init-cpio-spec.txt"\n' >> $(KERNEL_PATH)/minimal.config
-	cat arch/$(QEMU_ARCH).config >> $(KERNEL_PATH)/minimal.config
+	cat arch/$(ARCH).config >> $(KERNEL_PATH)/minimal.config
 	$(MAKE) -C $(KERNEL_PATH) ARCH=$(KERNEL_ARCH) allnoconfig
 	cd $(KERNEL_PATH) && ARCH=$(KERNEL_ARCH) scripts/kconfig/merge_config.sh -n .config minimal.config
 	$(if $(findstring -debug,$(KERNEL_VERSION)),cd $(KERNEL_PATH) && sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = -debug/' Makefile && ARCH=$(KERNEL_ARCH) scripts/kconfig/merge_config.sh -n .config $(PWD)/debug.config,)
