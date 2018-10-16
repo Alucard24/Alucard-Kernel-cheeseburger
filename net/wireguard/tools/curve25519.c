@@ -8,6 +8,16 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifndef __BYTE_ORDER__
+#include <sys/param.h>
+#if !defined(BYTE_ORDER) || !defined(BIG_ENDIAN) || !defined(LITTLE_ENDIAN)
+#error "Unable to determine endianness."
+#endif
+#define __BYTE_ORDER__ BYTE_ORDER
+#define __ORDER_BIG_ENDIAN__ BIG_ENDIAN
+#define __ORDER_LITTLE_ENDIAN__ LITTLE_ENDIAN
+#endif
+
 #ifdef __linux__
 #include <linux/types.h>
 typedef __u64 u64;
@@ -53,9 +63,9 @@ static noinline void memzero_explicit(void *s, size_t count)
 }
 
 #ifdef __SIZEOF_INT128__
-#include "../crypto/zinc/curve25519/curve25519-hacl64.h"
+#include "../crypto/zinc/curve25519/curve25519-hacl64.c"
 #else
-#include "../crypto/zinc/curve25519/curve25519-fiat32.h"
+#include "../crypto/zinc/curve25519/curve25519-fiat32.c"
 #endif
 
 void curve25519_generate_public(uint8_t pub[static CURVE25519_KEY_SIZE], const uint8_t secret[static CURVE25519_KEY_SIZE])
